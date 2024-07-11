@@ -27,7 +27,10 @@ $(document).ready(function() {
 
     document.getElementById("defaultOpen").click();
 
-    socket = new WebSocket('ws://localhost:8080/MiaouChat/chat');
+	const loc = window.location;
+	const wsStart = loc.protocol === 'https:' ? 'wss://' : 'ws://';
+	const endPoint = wsStart + loc.host + loc.pathname.replace('chat.html', 'chat');
+	socket = new WebSocket(endPoint);
 
     socket.onopen = function() {
         console.log("WebSocket connection opened");

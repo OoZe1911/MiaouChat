@@ -37,10 +37,10 @@ public class ServletFilter implements Filter {
 
         String uri = req.getRequestURI().toLowerCase();
 
-        // Exclude static resources
+        // Exclude static resources and specific endpoints
         boolean isLoginPage = uri.contains("login");
-        boolean isStaticResource = uri.endsWith(".css") || uri.endsWith(".js") || uri.endsWith(".ico") || uri.endsWith(".png");
-        
+        boolean isStaticResource = uri.endsWith(".css") || uri.endsWith(".js") || uri.endsWith(".ico") || uri.endsWith(".png") || uri.endsWith("getclientip");
+
         if(isLoginPage || isStaticResource) {
             chain.doFilter(request, response);
         } else {

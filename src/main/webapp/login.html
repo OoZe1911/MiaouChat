@@ -46,16 +46,42 @@
             const supportedCountries = ["US", "DE", "CA", "GB", "FR", "NL", "BE", "AU", "SE", "ES", "IT", "CH", "PT", "PL", "MX", "DK", "NO", "RU", "IE", "HU", "BR", "JP", "AT"];
             let timeout;
 
-            function getCountryCodeFromIP(callback) {
-                $.get('http://ip-api.com/json', function(response) {
+            function getClientIP(callback) {
+                $.get('getClientIP', function(response) {
+                    if (response && response.ip) {
+                        callback(response.ip);
+                    } else {
+                        callback(undefined);
+                    }
+                }).fail(function() {
+                    callback(undefined);
+                });
+            }
+
+            function getCountryCodeFromIP(ip, callback) {
+                const isLocalhost = window.location.hostname === 'localhost';
+                const url = isLocalhost 
+                    ? `http://ip-api.com/json/${ip}`  // URL directe pour localhost
+                    : `/ip-api/json/${ip}`;  // URL passant par le proxy pour les autres environnements
+
+
+                $.get(url, function(response) {
                     const countryCode = response.countryCode;
                     callback(countryCode);
+                }).fail(function() {
+                    callback("Unknown");
                 });
             }
 
             function updateCountryCode() {
-                getCountryCodeFromIP(function(countryCode) {
-                    $('#countryCode').val(countryCode);
+                getClientIP(function(ip) {
+                    if (ip) {
+                        getCountryCodeFromIP(ip, function(countryCode) {
+                            $('#countryCode').val(countryCode);
+                        });
+                    } else {
+                        $('#countryCode').val("Unknown");
+                    }
                 });
             }
 
@@ -66,29 +92,31 @@
                 const postalCode = $(this).val();
                 timeout = setTimeout(function() {
                     if ($.isNumeric(postalCode) && postalCode.length >= 4 && postalCode.length <= 5) {
-                        getCountryCodeFromIP(function(countryCode) {
-                            if (!supportedCountries.includes(countryCode)) {
-                                $('#city').val('Unknown');
-                                $('#submitButton').prop('disabled', true);
-                            } else {
-                                const url = `https://api.zippopotam.us/${countryCode.toLowerCase()}/${postalCode}`;
-                                $.getJSON(url, function(data) {
-                                    if (data.places && data.places.length > 0) {
-                                        let city = data.places[0]['place name'];
-                                        if (city.startsWith("Paris") || city.startsWith("Lyon") || city.startsWith("Marseille")) {
-                                            city = city.split(/[\s,]/)[0];
-                                        }
-                                        $('#city').val(city);
-                                        $('#submitButton').prop('disabled', false);
-                                    } else {
-                                        $('#city').val('Unknown');
-                                        $('#submitButton').prop('disabled', true);
-                                    }
-                                }).fail(function() {
+                        getClientIP(function(ip) {
+                            getCountryCodeFromIP(ip, function(countryCode) {
+                                if (!supportedCountries.includes(countryCode)) {
                                     $('#city').val('Unknown');
                                     $('#submitButton').prop('disabled', true);
-                                });
-                            }
+                                } else {
+                                    const url = `https://api.zippopotam.us/${countryCode.toLowerCase()}/${postalCode}`;
+                                    $.getJSON(url, function(data) {
+                                        if (data.places && data.places.length > 0) {
+                                            let city = data.places[0]['place name'];
+                                            if (city.startsWith("Paris") || city.startsWith("Lyon") || city.startsWith("Marseille")) {
+                                                city = city.split(/[\s,]/)[0];
+                                            }
+                                            $('#city').val(city);
+                                            $('#submitButton').prop('disabled', false);
+                                        } else {
+                                            $('#city').val('Unknown');
+                                            $('#submitButton').prop('disabled', true);
+                                        }
+                                    }).fail(function() {
+                                        $('#city').val('Unknown');
+                                        $('#submitButton').prop('disabled', true);
+                                    });
+                                }
+                            });
                         });
                     } else {
                         $('#city').val('');
