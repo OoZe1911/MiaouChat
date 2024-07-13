@@ -91,6 +91,10 @@ body, html {
     background-color: #ccc;
 }
 
+.tab button.notification {
+    background-color: yellow; /* Couleur de fond pour la notification */
+}
+
 .tabcontent {
     display: none;
     padding: 6px 12px;

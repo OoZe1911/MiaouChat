@@ -96,7 +96,7 @@
                             getCountryCodeFromIP(ip, function(countryCode) {
                                 if (!supportedCountries.includes(countryCode)) {
                                     $('#city').val('Unknown');
-                                    $('#submitButton').prop('disabled', true);
+                                    $('#submitButton').prop('disabled', false);
                                 } else {
                                     const url = `https://api.zippopotam.us/${countryCode.toLowerCase()}/${postalCode}`;
                                     $.getJSON(url, function(data) {
@@ -109,11 +109,11 @@
                                             $('#submitButton').prop('disabled', false);
                                         } else {
                                             $('#city').val('Unknown');
-                                            $('#submitButton').prop('disabled', true);
+                                            $('#submitButton').prop('disabled', false);
                                         }
                                     }).fail(function() {
                                         $('#city').val('Unknown');
-                                        $('#submitButton').prop('disabled', true);
+                                        $('#submitButton').prop('disabled', false);
                                     });
                                 }
                             });

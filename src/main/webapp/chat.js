@@ -1,5 +1,12 @@
+// Fonction pour faire défiler vers le bas
+function scrollToBottom(element) {
+    if (element) {
+        element.scrollTop = element.scrollHeight;
+    }
+}
+
+// Fonction pour ouvrir un onglet
 function openTab(evt, tabName) {
-    console.log("openTab called for:", tabName);
     var i, tabcontent, tablinks;
     tabcontent = document.getElementsByClassName("tabcontent");
     for (i = 0; i < tabcontent.length; i++) {
@@ -7,18 +14,31 @@ function openTab(evt, tabName) {
     }
     tablinks = document.getElementsByClassName("tablinks");
     for (i = 0; i < tablinks.length; i++) {
-        tablinks[i].className = tablinks[i].className.replace(" active", "");
+        tablinks[i].className = tablinks[i].className.replace(" active", "").replace(" notification", "");
     }
     document.getElementById(tabName).style.display = "block";
     if (evt) {
         evt.currentTarget.className += " active";
+    }
+    
+    // Définir le focus sur le champ de saisie de message
+    const messageInput = document.querySelector('#' + tabName + ' .message-input');
+    if (messageInput) {
+        messageInput.focus();
+    }
+
+    // Faire défiler automatiquement vers le bas
+    const chatWindow = document.querySelector('#' + tabName + ' .chat-window');
+    if (chatWindow) {
+        setTimeout(() => {
+            scrollToBottom(chatWindow);
+        }, 0);
     }
 }
 
 let socket;
 
 $(document).ready(function() {
-    console.log("Document ready");
     const user = JSON.parse(sessionStorage.getItem('user'));
     if (!user) {
         window.location.href = 'login.html';
@@ -27,18 +47,16 @@ $(document).ready(function() {
 
     document.getElementById("defaultOpen").click();
 
-	const loc = window.location;
-	const wsStart = loc.protocol === 'https:' ? 'wss://' : 'ws://';
-	const endPoint = wsStart + loc.host + loc.pathname.replace('chat.html', 'chat');
-	socket = new WebSocket(endPoint);
+    const loc = window.location;
+    const wsStart = loc.protocol === 'https:' ? 'wss://' : 'ws://';
+    const endPoint = wsStart + loc.host + loc.pathname.replace('chat.html', 'chat');
+    socket = new WebSocket(endPoint);
 
     socket.onopen = function() {
-        console.log("WebSocket connection opened");
         socket.send(JSON.stringify({ type: 'connect', username: user.username, age: user.age, gender: user.gender, city: user.city }));
     };
 
     socket.onmessage = function(event) {
-        console.log("Message received:", event.data);
         const msg = JSON.parse(event.data);
         switch (msg.type) {
             case 'userList':
@@ -61,14 +79,12 @@ $(document).ready(function() {
 
     function loadRooms() {
         $.get('api/rooms', function(data) {
-            console.log("Rooms loaded:", data);
             updateRoomList(data);
         });
     }
 
     function loadUsers() {
         $.get('api/users', function(data) {
-            console.log("Users loaded:", data);
             updateUserList(data);
         });
     }
@@ -110,12 +126,20 @@ $(document).ready(function() {
         });
     }
 
-    function openUserChatTab(username) {
-        console.log("Opening chat tab for user:", username);
+    function openUserChatTab(username, makeActive = true) {
         const formattedUsername = username.replace(/\s/g, '-');
         // Vérifier si l'onglet existe déjà
         if ($('#tab-' + formattedUsername).length === 0) {
-            // Créer un nouvel onglet
+            // Récupérer les informations de l'utilisateur depuis la liste des utilisateurs
+            const userElement = $(`a.user-link[data-username="${username}"]`).closest('tr');
+            const age = userElement.find('td:eq(1)').text();
+            const city = userElement.find('td:eq(2)').text();
+            const gender = userElement.hasClass('user-female') ? 'female' : 'male';
+
+            const titleColor = gender === 'female' ? 'red' : 'blue';
+            const pageTitle = `<span style="color: ${titleColor};">${username}</span> / ${age} ans / ${city}`;
+
+            // Créer un nouvel onglet avec juste le nom de l'utilisateur
             $('.tab').append('<button class="tablinks" onclick="openTab(event, \'' + formattedUsername + '\')" id="tab-' + formattedUsername + '">' + username + ' <svg onclick="closeTab(event, \'' + formattedUsername + '\')" style="width:12px; height:12px; cursor: pointer;"><use href="#icon-close"></use></svg></button>');
 
             // Créer un nouveau contenu d'onglet
@@ -127,7 +151,7 @@ $(document).ready(function() {
                 '<svg onclick="sendFile()" style="cursor: pointer;"><use href="#icon-file"></use></svg>' +
                 '<svg onclick="closeTab(event, \'' + formattedUsername + '\')" style="cursor: pointer;"><use href="#icon-close"></use></svg>' +
                 '</div>' +
-                '<h3>Discussion avec ' + username + '</h3>' +
+                '<h3>Discussion avec ' + pageTitle + '</h3>' +
                 '<div class="chat-window" id="chat-' + formattedUsername + '"></div>' +
                 '<input type="text" id="message-' + formattedUsername + '" class="message-input" placeholder="Entrez votre message">' +
                 '</div>'
@@ -135,19 +159,21 @@ $(document).ready(function() {
 
             // Ajouter l'événement keypress pour envoyer le message
             $('#message-' + formattedUsername).keypress(function(event) {
-                console.log("Key press event in chat input for user:", username, "Key:", event.key);
                 if (event.which === 13) {
                     sendMessageToUser(username);
                 }
             });
         }
 
-        // Ouvrir l'onglet
-        openTab(null, formattedUsername);
+        // Ouvrir l'onglet si nécessaire
+        if (makeActive) {
+            openTab(null, formattedUsername);
+        } else {
+            $('#tab-' + formattedUsername).addClass('notification');
+        }
     }
 
     function openRoomChatTab(roomId) {
-        console.log("Opening chat tab for room:", roomId);
         const formattedRoomId = roomId.replace(/\s/g, '-');
         // Vérifier si l'onglet existe déjà
         if ($('#tab-room-' + formattedRoomId).length === 0) {
@@ -171,7 +197,6 @@ $(document).ready(function() {
 
             // Ajouter l'événement keypress pour envoyer le message
             $('#message-room-' + formattedRoomId).keypress(function(event) {
-                console.log("Key press event in chat input for room:", roomId, "Key:", event.key);
                 if (event.which === 13) {
                     sendMessageToRoom(roomId);
                 }
@@ -183,36 +208,42 @@ $(document).ready(function() {
     }
 
     function displayMessage(msg) {
-        console.log("Displaying message:", msg);
         const nameColor = (msg.gender === 'female' ? 'red' : 'blue');
         const fromUser = msg.from ? msg.from.replace(/\s/g, '-') : 'Unknown';
         const roomName = msg.roomName ? msg.roomName.replace(/\s/g, '-') : null;
         const messageHtml = '<p><span style="color:' + nameColor + ';">' + msg.from + '</span>: ' + msg.content + '</p>';
+
         if (roomName) {
             $('#chat-room-' + roomName).append(messageHtml);
+            scrollToBottom(document.getElementById('chat-room-' + roomName));
         } else {
-            // Vérifier si l'onglet utilisateur existe déjà
-            if ($('#chat-' + fromUser).length === 0) {
-                openUserChatTab(msg.from);
+            const chatWindowId = '#chat-' + fromUser;
+            const chatWindow = $(chatWindowId);
+            const tabExists = chatWindow.length > 0;
+
+            if (!tabExists) {
+                openUserChatTab(msg.from, false);
             }
-            $('#chat-' + fromUser).append(messageHtml);
+
+            $(chatWindowId).append(messageHtml); // Append the message regardless of tab existence
+
+            if ($(chatWindowId).is(':visible')) {
+                scrollToBottom(chatWindow[0]);
+            } else {
+                $('#tab-' + fromUser).addClass('notification');
+            }
         }
     }
 
     window.closeTab = function(event, tabName) {
-        console.log("Closing tab:", tabName);
         event.stopPropagation();
         const tabContent = $('#' + tabName);
         const tabButton = $('#tab-' + tabName);
         if (tabContent.length) {
             tabContent.remove();
-        } else {
-            console.log("Tab content not found for:", tabName);
         }
         if (tabButton.length) {
             tabButton.remove();
-        } else {
-            console.log("Tab button not found for:", tabName);
         }
 
         // Revenir à l'onglet Accueil si aucun autre onglet n'est ouvert
@@ -227,7 +258,6 @@ $(document).ready(function() {
         if (roomName !== '') {
             // Envoyer la demande de création de salon au serveur
             $.post('api/rooms', { name: roomName }, function() {
-                console.log("Room created:", roomName);
                 loadRooms();
                 $('#newRoomName').val('');
             });
@@ -236,38 +266,46 @@ $(document).ready(function() {
 
     function sendMessageToUser(username) {
         const formattedUsername = username.replace(/\s/g, '-');
-        const message = $('#message-' + formattedUsername).val();
-        $('#chat-' + formattedUsername).append('<p><span style="color:' + (user.gender === 'female' ? 'red' : 'blue') + ';">' + user.username + '</span>: ' + message + '</p>');
-        $('#message-' + formattedUsername).val('');
+        const messageInput = $('#message-' + formattedUsername);
+        const message = messageInput.val().trim();
+        if (message === '') return;
+
+        const chatWindowId = '#chat-' + formattedUsername;
+        $(chatWindowId).append('<p><span style="color:' + (user.gender === 'female' ? 'red' : 'blue') + ';">' + user.username + '</span>: ' + message + '</p>');
+        messageInput.val('');
 
         // Envoyer le message au serveur via WebSocket
-        console.log("Sending message to user:", username, "Message:", message);
         socket.send(JSON.stringify({ type: 'message', from: user.username, to: username, content: message, gender: user.gender }));
+
+        // Défilement automatique vers le bas
+        scrollToBottom(document.getElementById('chat-' + formattedUsername));
     }
 
     function sendMessageToRoom(roomId) {
         const formattedRoomId = roomId.replace(/\s/g, '-');
-        const message = $('#message-room-' + formattedRoomId).val();
+        const messageInput = $('#message-room-' + formattedRoomId);
+        const message = messageInput.val().trim();
+        if (message === '') return;
+
         $('#chat-room-' + formattedRoomId).append('<p><span style="color:' + (user.gender === 'female' ? 'red' : 'blue') + ';">' + user.username + '</span>: ' + message + '</p>');
-        $('#message-room-' + formattedRoomId).val('');
+        messageInput.val('');
 
         // Envoyer le message au serveur via WebSocket
-        console.log("Sending message to room:", roomId, "Message:", message);
         socket.send(JSON.stringify({ type: 'message', roomName: roomId, from: user.username, content: message, gender: user.gender }));
+
+        // Défilement automatique vers le bas
+        scrollToBottom(document.getElementById('chat-room-' + formattedRoomId));
     }
 
     function startWebcam() {
-        console.log("Starting webcam");
         alert('Démarrer la webcam');
     }
 
     function startMicrophone() {
-        console.log("Starting microphone");
         alert('Démarrer le micro');
     }
 
     function sendFile() {
-        console.log("Sending file");
         alert('Envoyer un fichier');
     }
 });
