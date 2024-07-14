@@ -161,11 +161,15 @@
 
                 // Envoyer les informations utilisateur à la servlet de login en utilisant un chemin relatif
                 $.post('login', user, function() {
+					console.log("DEBUG 0");
                     // Stocker les informations utilisateur dans le stockage de session (sessionStorage)
                     sessionStorage.setItem('user', JSON.stringify(user));
+                    console.log("DEBUG 1");
                     // Rediriger vers la page de chat après avoir ajouté l'utilisateur
                     window.location.href = 'chat.html';
+                    console.log("DEBUG 2");
                 }).fail(function() {
+                	console.log("DEBUG 3");
                     showError('Erreur de connexion. Veuillez réessayer.');
                 });
             });

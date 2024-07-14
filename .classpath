@@ -13,5 +13,8 @@
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.web.container"/>
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.module.container"/>
+	<classpathentry kind="lib" path="/Users/fabrice/Downloads/jakarta.servlet-api-6.1.0.jar"/>
+	<classpathentry kind="lib" path="/Users/fabrice/Downloads/jakarta.websocket-client-api-2.2.0.jar"/>
+	<classpathentry kind="lib" path="/Users/fabrice/Downloads/jakarta.websocket-api-2.2.0.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>

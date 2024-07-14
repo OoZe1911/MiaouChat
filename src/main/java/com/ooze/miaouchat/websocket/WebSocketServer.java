@@ -1,11 +1,11 @@
 package com.ooze.miaouchat.websocket;
 
 import com.google.gson.Gson;
-import javax.websocket.OnClose;
-import javax.websocket.OnMessage;
-import javax.websocket.OnOpen;
-import javax.websocket.Session;
-import javax.websocket.server.ServerEndpoint;
+import jakarta.websocket.OnClose;
+import jakarta.websocket.OnMessage;
+import jakarta.websocket.OnOpen;
+import jakarta.websocket.Session;
+import jakarta.websocket.server.ServerEndpoint;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -96,8 +96,10 @@ public class WebSocketServer {
         private String content;
         private List<User> users;
 
-        // Constructeurs, getters et setters
+        // Constructeur sans arguments
+        public Message() {}
 
+        // Constructeurs, getters et setters
         public Message(String type, List<User> users) {
             this.type = type;
             this.users = users;
@@ -110,6 +112,7 @@ public class WebSocketServer {
             this.gender = gender;
         }
 
+        // Getters et setters
         public String getType() {
             return type;
         }
@@ -153,6 +156,8 @@ public class WebSocketServer {
         private String gender;
         private String city;
 
+        public User() {}
+
         public User(String username, int age, String gender, String city) {
             this.username = username;
             this.age = age;
@@ -161,7 +166,6 @@ public class WebSocketServer {
         }
 
         // Getters et setters
-
         public String getUsername() {
             return username;
         }
