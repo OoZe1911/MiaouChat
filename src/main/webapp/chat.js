@@ -71,7 +71,7 @@ $(document).ready(function() {
                 updateRoomList(msg.rooms);
                 break;
             case 'roomUsers':
-                // Mettre à jour la liste des utilisateurs dans le salon
+                updateRoomUserList(msg.roomName, msg.users);
                 break;
             case 'message':
                 displayMessage(msg);
@@ -82,26 +82,11 @@ $(document).ready(function() {
         }
     };
 
-    loadRooms();
-    loadUsers();
-
-    function loadRooms() {
-        $.get('api/rooms', function(data) {
-            updateRoomList(data);
-        });
-    }
-
-    function loadUsers() {
-        $.get('api/users', function(data) {
-            updateUserList(data);
-        });
-    }
-
     function updateRoomList(rooms) {
         $('#roomList').empty();
         rooms.sort((a, b) => a.name.localeCompare(b.name));
         rooms.forEach(function(room) {
-            $('#roomList').append('<tr><td><a href="#" class="room-link" data-roomid="' + room.name + '">' + room.name + ' (' + room.users.length + ')</a></td></tr>');
+            $('#roomList').append('<tr><td><a href="#" class="room-link" data-roomid="' + room.name + '">' + room.name + ' (' + room.userCount + ')</a></td></tr>');
         });
 
         // Ajouter l'événement de clic aux liens des salons
@@ -109,7 +94,7 @@ $(document).ready(function() {
             event.preventDefault();
             const roomId = $(this).data('roomid');
             openRoomChatTab(roomId);
-            socket.send(JSON.stringify({ type: 'joinRoom', roomName: roomId }));
+            socket.send(JSON.stringify({ type: 'joinRoom', roomName: roomId, username: user.username }));
         });
     }
 
@@ -131,6 +116,22 @@ $(document).ready(function() {
             event.preventDefault();
             const username = $(this).data('username');
             openUserChatTab(username);
+        });
+    }
+
+    function updateRoomUserList(roomName, users) {
+        const formattedRoomName = roomName.replace(/\s/g, '-');
+        const userListContainer = $('#room-users-' + formattedRoomName);
+        userListContainer.empty();
+        users.forEach(function(user) {
+            const rowClass = user.gender === 'male' ? 'user-male' : 'user-female';
+            userListContainer.append(
+                '<tr class="' + rowClass + '">' +
+                '<td>' + user.username + '</td>' +
+                '<td>' + user.age + '</td>' +
+                '<td>' + user.city + '</td>' +
+                '</tr>'
+            );
         });
     }
 
@@ -173,13 +174,13 @@ $(document).ready(function() {
             });
         }
 
-        // Ouvrir l'onglet si nécessaire
-        if (makeActive) {
-            openTab(null, formattedUsername);
+		// Ouvrir l'onglet si nécessaire
+		if (makeActive) {
+		     openTab(null, formattedUsername);
 			$('#tab-' + formattedUsername).addClass('active');
-        } else {
-            $('#tab-' + formattedUsername).addClass('notification');
-        }
+		 } else {
+		     $('#tab-' + formattedUsername).addClass('notification');
+		 }
     }
 
     function openRoomChatTab(roomId) {
@@ -189,7 +190,7 @@ $(document).ready(function() {
             // Créer un nouvel onglet
             $('.tab').append('<button class="tablinks" onclick="openTab(event, \'room-' + formattedRoomId + '\')" id="tab-room-' + formattedRoomId + '">' + roomId + ' <svg onclick="closeTab(event, \'room-' + formattedRoomId + '\')" style="width:12px; height:12px; cursor: pointer;"><use href="#icon-close"></use></svg></button>');
 
-            // Créer un nouveau contenu d'onglet
+            // Créer un nouveau contenu d'onglet avec la zone utilisateur à droite
             $('body').append(
                 '<div id="room-' + formattedRoomId + '" class="tabcontent">' +
                 '<div class="icon-buttons">' +
@@ -198,8 +199,12 @@ $(document).ready(function() {
                 '<svg onclick="sendFile()" style="cursor: pointer;"><use href="#icon-file"></use></svg>' +
                 '<svg onclick="closeTab(event, \'room-' + formattedRoomId + '\')" style="cursor: pointer;"><use href="#icon-close"></use></svg>' +
                 '</div>' +
-                '<h3>Discussion dans ' + roomId + '</h3>' +
+                '<div class="chat-room-container">' +
                 '<div class="chat-window" id="chat-room-' + formattedRoomId + '"></div>' +
+                '<div class="room-user-list">' +
+                '<table class="user-table" id="room-users-' + formattedRoomId + '"></table>' +
+                '</div>' +
+                '</div>' +
                 '<input type="text" id="message-room-' + formattedRoomId + '" class="message-input" placeholder="Entrez votre message">' +
                 '</div>'
             );
@@ -214,6 +219,7 @@ $(document).ready(function() {
 
         // Ouvrir l'onglet
         openTab(null, 'room-' + formattedRoomId);
+        $('#tab-room-' + formattedRoomId).addClass('active');
     }
 
     function displayMessage(msg) {
@@ -259,19 +265,21 @@ $(document).ready(function() {
         if ($('.tablinks.active').length === 0) {
             document.getElementById("defaultOpen").click();
         }
-        socket.send(JSON.stringify({ type: 'leaveRoom', roomName: tabName }));
-    }
+
+        if (tabName.startsWith('room-')) {
+            const roomName = tabName.replace('room-', '').replace(/-/g, ' ');
+            socket.send(JSON.stringify({ type: 'leaveRoom', roomName: roomName, username: user.username }));
+        }
+    };
 
     window.createRoom = function() {
         const roomName = $('#newRoomName').val().trim();
         if (roomName !== '') {
-            // Envoyer la demande de création de salon au serveur
-            $.post('api/rooms', { name: roomName }, function() {
-                loadRooms();
-                $('#newRoomName').val('');
-            });
+            // Envoyer la demande de création de salon au serveur via WebSocket
+            socket.send(JSON.stringify({ type: 'createRoom', roomName: roomName }));
+            $('#newRoomName').val('');
         }
-    }
+    };
 
     function sendMessageToUser(username) {
         const formattedUsername = username.replace(/\s/g, '-');
@@ -318,3 +326,4 @@ $(document).ready(function() {
         alert('Envoyer un fichier');
     }
 });
+

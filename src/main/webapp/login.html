@@ -64,7 +64,6 @@
                     ? `http://ip-api.com/json/${ip}`  // URL directe pour localhost
                     : `/ip-api/json/${ip}`;  // URL passant par le proxy pour les autres environnements
 
-
                 $.get(url, function(response) {
                     const countryCode = response.countryCode;
                     callback(countryCode);
@@ -140,6 +139,11 @@
                     return;
                 }
 
+                if (/([0-9]|1[0-7])(\s|-)*a/i.test(username)) {
+                    showError('Le pseudo ne peut pas contenir un âge inférieur à 18 ans.');
+                    return;
+                }
+
                 const gender = $('#gender').val();
                 const postalCode = $('#postalCode').val();
                 const city = $('#city').val();
@@ -159,19 +163,28 @@
                     countryCode: countryCode
                 };
 
-                // Envoyer les informations utilisateur à la servlet de login en utilisant un chemin relatif
-                $.post('login', user, function() {
-					console.log("DEBUG 0");
-                    // Stocker les informations utilisateur dans le stockage de session (sessionStorage)
-                    sessionStorage.setItem('user', JSON.stringify(user));
-                    console.log("DEBUG 1");
-                    // Rediriger vers la page de chat après avoir ajouté l'utilisateur
-                    window.location.href = 'chat.html';
-                    console.log("DEBUG 2");
-                }).fail(function() {
-                	console.log("DEBUG 3");
+                const loc = window.location;
+                const wsStart = loc.protocol === 'https:' ? 'wss://' : 'ws://';
+                const endPoint = wsStart + loc.host + loc.pathname.replace('login.html', 'chat');
+                const socket = new WebSocket(endPoint);
+
+                socket.onopen = function() {
+                    socket.send(JSON.stringify({ type: 'connect', username: user.username, age: user.age, gender: user.gender, city: user.city }));
+                };
+
+                socket.onmessage = function(event) {
+                    const msg = JSON.parse(event.data);
+                    if (msg.type === 'error') {
+                        showError(msg.error);
+                    } else {
+                        sessionStorage.setItem('user', JSON.stringify(user));
+                        window.location.href = 'chat.html';
+                    }
+                };
+
+                socket.onerror = function() {
                     showError('Erreur de connexion. Veuillez réessayer.');
-                });
+                };
             });
 
             $('#age').on('input', function() {

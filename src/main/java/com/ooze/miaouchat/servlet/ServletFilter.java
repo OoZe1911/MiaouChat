@@ -1,7 +1,6 @@
 package com.ooze.miaouchat.servlet;
 
 import com.ooze.miaouchat.bean.User;
-
 import java.io.IOException;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
@@ -37,11 +36,12 @@ public class ServletFilter implements Filter {
 
         String uri = req.getRequestURI().toLowerCase();
 
-        // Exclude static resources and specific endpoints
+        // Exclude static resources, login page and specific endpoints
         boolean isLoginPage = uri.contains("login");
         boolean isStaticResource = uri.endsWith(".css") || uri.endsWith(".js") || uri.endsWith(".ico") || uri.endsWith(".png") || uri.endsWith("getclientip");
+        boolean isWebSocketRequest = uri.contains("/chat");
 
-        if(isLoginPage || isStaticResource) {
+        if (isLoginPage || isStaticResource || isWebSocketRequest) {
             chain.doFilter(request, response);
         } else {
             // Check if session is new
@@ -51,7 +51,7 @@ public class ServletFilter implements Filter {
             } else {
                 // Check user authentication
                 User user = (User) session.getAttribute("user");
-                if(user != null) {
+                if (user != null) {
                     chain.doFilter(request, response);
                 } else {
                     res.sendRedirect("login.html");

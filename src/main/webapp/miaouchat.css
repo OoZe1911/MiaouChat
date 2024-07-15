@@ -165,3 +165,18 @@ body, html {
     padding: 10px;
     box-sizing: border-box;
 }
+
+.chat-room-container {
+    display: flex;
+}
+.chat-window {
+    flex: 3;
+    overflow-y: auto;
+}
+.room-user-list {
+    flex: 1;
+    overflow-y: auto;
+    border-left: 1px solid #ccc;
+    padding-left: 10px;
+    margin-top: 40px; /* Ajoutez de l'espace au-dessus de la liste des utilisateurs pour éviter le chevauchement avec les icônes */
+}

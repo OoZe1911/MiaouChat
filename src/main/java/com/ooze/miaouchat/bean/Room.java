@@ -6,10 +6,12 @@ import java.util.List;
 public class Room {
     private String name;
     private List<User> users;
+    private int userCount;
 
     public Room(String name) {
         this.name = name;
         this.users = new ArrayList<>();
+        this.userCount = 0;
     }
 
     public String getName() {
@@ -22,13 +24,15 @@ public class Room {
 
     public void addUser(User user) {
         this.users.add(user);
+        this.userCount = this.users.size();
     }
 
     public void removeUser(User user) {
         this.users.remove(user);
+        this.userCount = this.users.size();
     }
 
     public int getUserCount() {
-        return this.users.size();
+        return this.userCount;
     }
 }
