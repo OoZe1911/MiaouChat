@@ -1,6 +1,7 @@
 package com.ooze.miaouchat.websocket;
 
 import com.google.gson.Gson;
+import com.ooze.miaouchat.bean.User;
 import jakarta.websocket.OnClose;
 import jakarta.websocket.OnMessage;
 import jakarta.websocket.OnOpen;
@@ -46,6 +47,9 @@ public class WebSocketServer {
                 break;
             case "message":
                 sendMessageToUser(msg.getFrom(), msg.getTo(), msg.getContent(), msg.getGender());
+                break;
+            case "ping":
+                // Ignorer les messages de type 'ping'
                 break;
         }
     }
@@ -147,39 +151,6 @@ public class WebSocketServer {
 
         public List<User> getUsers() {
             return users;
-        }
-    }
-
-    private static class User {
-        private String username;
-        private int age;
-        private String gender;
-        private String city;
-
-        public User() {}
-
-        public User(String username, int age, String gender, String city) {
-            this.username = username;
-            this.age = age;
-            this.gender = gender;
-            this.city = city;
-        }
-
-        // Getters et setters
-        public String getUsername() {
-            return username;
-        }
-
-        public int getAge() {
-            return age;
-        }
-
-        public String getGender() {
-            return gender;
-        }
-
-        public String getCity() {
-            return city;
         }
     }
 }

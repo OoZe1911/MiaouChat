@@ -54,6 +54,11 @@ $(document).ready(function() {
 
     socket.onopen = function() {
         socket.send(JSON.stringify({ type: 'connect', username: user.username, age: user.age, gender: user.gender, city: user.city }));
+        
+        // Envoyer un ping toutes les 30 secondes pour garder la connexion WebSocket ouverte
+        setInterval(() => {
+            socket.send(JSON.stringify({ type: 'ping' }));
+        }, 30000);
     };
 
     socket.onmessage = function(event) {
@@ -70,6 +75,9 @@ $(document).ready(function() {
                 break;
             case 'message':
                 displayMessage(msg);
+                break;
+            case 'ping':
+                // Ignorer les messages de type 'ping'
                 break;
         }
     };
@@ -168,6 +176,7 @@ $(document).ready(function() {
         // Ouvrir l'onglet si nécessaire
         if (makeActive) {
             openTab(null, formattedUsername);
+			$('#tab-' + formattedUsername).addClass('active');
         } else {
             $('#tab-' + formattedUsername).addClass('notification');
         }
