@@ -39,6 +39,13 @@ body, html {
     margin-bottom: 20px;
 }
 
+.login-container .subtitle {
+    text-align: center;
+    font-size: 14px; /* Taille de texte plus petite pour le sous-titre */
+    color: #555; /* Couleur grise pour le sous-titre */
+    margin-bottom: 30px; /* Espace entre le sous-titre et le formulaire */
+}
+
 .login-container label {
     display: block;
     margin-bottom: 5px;
@@ -168,11 +175,15 @@ body, html {
 
 .chat-room-container {
     display: flex;
+    flex-direction: row;
+    height: calc(100vh - 120px); /* Ajuster en fonction de la hauteur de la fenêtre */
 }
+
 .chat-window {
     flex: 3;
     overflow-y: auto;
 }
+
 .room-user-list {
     flex: 1;
     overflow-y: auto;

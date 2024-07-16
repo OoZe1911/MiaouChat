@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Chat Application - Login</title>
+    <title>Miaou Chat</title>
     <meta charset="UTF-8">
     <link rel="stylesheet" type="text/css" href="miaouchat.css">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
     <script src="jquery.js"></script>
     <style>
         #countryCode {
@@ -13,11 +14,11 @@
 </head>
 <body>
     <div class="login-container">
-        <h2>Login</h2>
+        <h2>Miaou Chat</h2>
+        <p class="subtitle">Site de discussion gratuit sans inscription</p>
         <form id="loginForm" method="post">
             <label for="username">Pseudo:</label>
-            <input type="text" id="username" name="username" required>
-            
+            <input type="text" id="username" name="username" maxlength="30" required>
             <label for="gender">Sexe:</label>
             <select id="gender" name="gender" required>
                 <option value="male">Homme</option>

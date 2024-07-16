@@ -16,31 +16,30 @@
         <div class="container">
             <div class="left-column">
                 <h3>Salons</h3>
-                <input type="text" id="newRoomName" placeholder="Nom du salon">
+                <input type="text" id="newRoomName" placeholder="Nom du salon" maxlength="30">
                 <button onclick="createRoom()">Créer un salon</button>
+                <div>Les salons vides sont automatiquement supprimés.</div>
                 <div class="room-list-container">
                     <table class="room-table">
                         <tbody id="roomList"></tbody>
                     </table>
                 </div>
             </div>
-            <div class="right-column">
-                <h3>Utilisateurs Connectés</h3>
-                <div class="user-list-container">
-                    <table class="user-table">
-                        <thead>
-                            <tr>
-                                <th>Nom</th>
-                                <th>Âge</th>
-                                <th>Ville</th>
-                            </tr>
-                        </thead>
-                        <tbody id="userList"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
+	<div class="right-column">
+	    <h3 id="userCount">Utilisateurs Connectés</h3>
+	    <div class="user-list-container">
+	        <table class="user-table">
+	            <thead>
+	                <tr>
+	                    <th>Nom</th>
+	                    <th>Âge</th>
+	                    <th>Ville</th>
+	                </tr>
+	            </thead>
+	            <tbody id="userList"></tbody>
+	        </table>
+	    </div>
+	</div>
 
     <!-- Include SVG icons inline -->
     <svg style="display: none;">

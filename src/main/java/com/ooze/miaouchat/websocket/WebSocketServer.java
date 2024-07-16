@@ -60,6 +60,7 @@ public class WebSocketServer {
                     users.put(msg.getUsername(), newUser);
                     sessions.put(msg.getUsername(), session);
                     broadcastUserList();
+                    broadcastRoomList();
                 }
                 break;
             case "joinRoom":
