@@ -22,12 +22,10 @@ public class WebSocketServer {
 
     @OnOpen
     public void onOpen(Session session) {
-        System.out.println("New session opened: " + session.getId());
     }
 
     @OnClose
     public void onClose(Session session) {
-        System.out.println("Session closed: " + session.getId());
         String username = getUsernameBySession(session);
         if (username != null) {
             sessions.remove(username);
@@ -308,19 +306,23 @@ public class WebSocketServer {
             return roomName;
         }
 
-        public List<User> getUsers() {
+        @SuppressWarnings("unused")
+		public List<User> getUsers() {
             return users;
         }
 
-        public List<Room> getRooms() {
+        @SuppressWarnings("unused")
+		public List<Room> getRooms() {
             return rooms;
         }
 
-        public String getError() {
+        @SuppressWarnings("unused")
+		public String getError() {
             return error;
         }
 
-        public boolean isRoomMessage() {
+        @SuppressWarnings("unused")
+		public boolean isRoomMessage() {
             return isRoomMessage;
         }
     }

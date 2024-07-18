@@ -133,21 +133,28 @@ $(document).ready(function() {
 	}
 
 
-    function updateRoomUserList(roomName, users) {
-        const formattedRoomName = roomName.replace(/\s/g, '-');
-        const userListContainer = $('#room-users-' + formattedRoomName);
-        userListContainer.empty();
-        users.forEach(function(user) {
-            const rowClass = user.gender === 'male' ? 'user-male' : 'user-female';
-            userListContainer.append(
-                '<tr class="' + rowClass + '">' +
-                '<td>' + user.username + '</td>' +
-                '<td>' + user.age + '</td>' +
-                '<td>' + user.city + '</td>' +
-                '</tr>'
-            );
-        });
-    }
+	function updateRoomUserList(roomName, users) {
+	    const formattedRoomName = roomName.replace(/\s/g, '-');
+	    const userListContainer = $('#room-users-' + formattedRoomName);
+	    userListContainer.empty();
+	    users.forEach(function(user) {
+	        const rowClass = user.gender === 'male' ? 'user-male' : 'user-female';
+	        userListContainer.append(
+	            '<tr class="' + rowClass + '">' +
+	            '<td><a href="#" class="room-user-link" data-username="' + user.username + '">' + user.username + '</a></td>' +
+	            '<td>' + user.age + '</td>' +
+	            '<td>' + user.city + '</td>' +
+	            '</tr>'
+	        );
+	    });
+
+	    // Ajouter l'événement de clic aux liens des utilisateurs dans les salons
+	    $('.room-user-link').click(function(event) {
+	        event.preventDefault();
+	        const username = $(this).data('username');
+	        openUserChatTab(username);
+	    });
+	}
 
     function openUserChatTab(username, makeActive = true) {
         const formattedUsername = username.replace(/\s/g, '-');
