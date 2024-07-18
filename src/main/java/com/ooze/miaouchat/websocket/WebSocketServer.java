@@ -9,6 +9,7 @@ import jakarta.websocket.OnOpen;
 import jakarta.websocket.Session;
 import jakarta.websocket.server.ServerEndpoint;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -71,9 +72,9 @@ public class WebSocketServer {
                 break;
             case "message":
                 if (msg.getRoomName() != null) {
-                    sendMessageToRoom(msg.getRoomName(), msg.getFrom(), msg.getContent(), msg.getGender());
+                    sendMessageToRoom(msg.getRoomName(), msg.getFrom(), msg.getContent(), msg.getGender(), msg.getFileName(), msg.getFileUrl(), msg.getFileType());
                 } else {
-                    sendMessageToUser(msg.getFrom(), msg.getTo(), msg.getContent(), msg.getGender());
+                    sendMessageToUser(msg.getFrom(), msg.getTo(), msg.getContent(), msg.getGender(), msg.getFileName(), msg.getFileUrl(), msg.getFileType());
                 }
                 break;
             case "ping":
@@ -81,7 +82,7 @@ public class WebSocketServer {
                 break;
         }
     }
-
+    
     private void sendErrorMessage(Session session, String errorMessage) {
         try {
             Gson gson = new Gson();
@@ -162,9 +163,9 @@ public class WebSocketServer {
         }
     }
 
-    private void sendMessageToRoom(String roomName, String from, String content, String gender) {
+    private void sendMessageToRoom(String roomName, String from, String content, String gender, String fileName, String fileUrl, String fileType) {
         Gson gson = new Gson();
-        String messageJson = gson.toJson(Message.createRoomMessage(from, content, gender, roomName));
+        String messageJson = gson.toJson(Message.createRoomMessage(from, content, gender, roomName, fileName, fileUrl, fileType));
         Room room = rooms.get(roomName);
         if (room != null) {
             for (User user : room.getUsers()) {
@@ -179,12 +180,12 @@ public class WebSocketServer {
         }
     }
 
-    private void sendMessageToUser(String from, String to, String content, String gender) {
+    private void sendMessageToUser(String from, String to, String content, String gender, String fileName, String fileUrl, String fileType) {
         Session session = sessions.get(to);
         if (session != null) {
             try {
                 Gson gson = new Gson();
-                String messageJson = gson.toJson(Message.createUserMessage(from, to, content, gender));
+                String messageJson = gson.toJson(Message.createUserMessage(from, to, content, gender, fileName, fileUrl, fileType));
                 session.getBasicRemote().sendText(messageJson);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -215,8 +216,13 @@ public class WebSocketServer {
         private List<Room> rooms;
         private String error;
         private boolean isRoomMessage;
+        private String fileType;  // Nouvel attribut
+        private String fileName;  // Nouvel attribut
+        private String fileUrl;   // Nouvel attribut
 
         public Message() {}
+
+        // Méthodes existantes
 
         public static Message createUserListMessage(List<User> users) {
             Message message = new Message();
@@ -240,7 +246,7 @@ public class WebSocketServer {
             return message;
         }
 
-        public static Message createRoomMessage(String from, String content, String gender, String roomName) {
+        public static Message createRoomMessage(String from, String content, String gender, String roomName, String fileName, String fileUrl, String fileType) {
             Message message = new Message();
             message.type = "message";
             message.from = from;
@@ -248,10 +254,13 @@ public class WebSocketServer {
             message.gender = gender;
             message.roomName = roomName;
             message.isRoomMessage = true;
+            message.fileName = fileName;
+            message.fileUrl = fileUrl;
+            message.fileType = fileType;
             return message;
         }
 
-        public static Message createUserMessage(String from, String to, String content, String gender) {
+        public static Message createUserMessage(String from, String to, String content, String gender, String fileName, String fileUrl, String fileType) {
             Message message = new Message();
             message.type = "message";
             message.from = from;
@@ -259,6 +268,9 @@ public class WebSocketServer {
             message.content = content;
             message.gender = gender;
             message.isRoomMessage = false;
+            message.fileName = fileName;
+            message.fileUrl = fileUrl;
+            message.fileType = fileType;
             return message;
         }
 
@@ -267,6 +279,27 @@ public class WebSocketServer {
             message.type = "error";
             message.error = error;
             return message;
+        }
+
+        private static String getFileType(String content) {
+            String extension = content.substring(content.lastIndexOf('.') + 1);
+            switch (extension) {
+                case "mp3":
+                case "wav":
+                case "ogg":
+                    return "audio";
+                case "mp4":
+                case "mov":
+                case "avi":
+                    return "video";
+                case "jpg":
+                case "jpeg":
+                case "png":
+                case "gif":
+                    return "image";
+                default:
+                    return "unknown";
+            }
         }
 
         // Getters
@@ -306,24 +339,34 @@ public class WebSocketServer {
             return roomName;
         }
 
-        @SuppressWarnings("unused")
-		public List<User> getUsers() {
+        public List<User> getUsers() {
             return users;
         }
 
-        @SuppressWarnings("unused")
-		public List<Room> getRooms() {
+        public List<Room> getRooms() {
             return rooms;
         }
 
-        @SuppressWarnings("unused")
-		public String getError() {
+        public String getError() {
             return error;
         }
 
-        @SuppressWarnings("unused")
-		public boolean isRoomMessage() {
+        public boolean isRoomMessage() {
             return isRoomMessage;
         }
+
+        public String getFileType() {
+            return fileType;
+        }
+
+        public String getFileName() {
+            return fileName;
+        }
+
+        public String getFileUrl() {
+            return fileUrl;
+        }
     }
+
+
 }

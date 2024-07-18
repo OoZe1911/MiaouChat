@@ -37,6 +37,10 @@ function openTab(evt, tabName) {
     }
 }
 
+function sendFile() {
+    $('#fileInput').click();
+}
+
 let socket;
 
 $(document).ready(function() {
@@ -152,16 +156,25 @@ $(document).ready(function() {
 	    });
 	}
 
+	function debounce(func, wait) {
+	    let timeout;
+	    return function() {
+	        const context = this, args = arguments;
+	        clearTimeout(timeout);
+	        timeout = setTimeout(() => func.apply(context, args), wait);
+	    };
+	}
+	
 	// Ajouter des gestionnaires d'événements pour changer les filtres
 	$(document).ready(function() {
 	    $('input[name="filter"]').change(function() {
 	        updateUserList(users);
 	    });
-	    $('#nameFilter').on('input', function() {
-	        updateUserList(users);
-	    });
-	});
 
+	    $('#nameFilter').on('input', debounce(function() {
+	        updateUserList(users);
+	    }, 300));  // 300 millisecondes de délai
+	});
 
 
 	// Ajouter un gestionnaire d'événements pour changer le filtre
@@ -194,98 +207,105 @@ $(document).ready(function() {
 	    });
 	}
 
-    function openUserChatTab(username, makeActive = true) {
-        const formattedUsername = username.replace(/\s/g, '-');
-        // Vérifier si l'onglet existe déjà
-        if ($('#tab-' + formattedUsername).length === 0) {
-            // Récupérer les informations de l'utilisateur depuis la liste des utilisateurs
-            const userElement = $(`a.user-link[data-username="${username}"]`).closest('tr');
-            const age = userElement.find('td:eq(1)').text();
-            const city = userElement.find('td:eq(2)').text();
-            const gender = userElement.hasClass('user-female') ? 'female' : 'male';
+	let currentChat;
 
-            const titleColor = gender === 'female' ? 'red' : 'blue';
-            const pageTitle = `<span style="color: ${titleColor};">${username}</span> / ${age} ans / ${city}`;
+	function openUserChatTab(username, makeActive = true) {
+	    const formattedUsername = username.replace(/\s/g, '-');
+	    // Vérifier si l'onglet existe déjà
+	    if ($('#tab-' + formattedUsername).length === 0) {
+	        // Récupérer les informations de l'utilisateur depuis la liste des utilisateurs
+	        const userElement = $(`a.user-link[data-username="${username}"]`).closest('tr');
+	        const age = userElement.find('td:eq(1)').text();
+	        const city = userElement.find('td:eq(2)').text();
+	        const gender = userElement.hasClass('user-female') ? 'female' : 'male';
 
-            // Créer un nouvel onglet avec juste le nom de l'utilisateur
-            $('.tab').append('<button class="tablinks" onclick="openTab(event, \'' + formattedUsername + '\')" id="tab-' + formattedUsername + '">' + username + ' <svg onclick="closeTab(event, \'' + formattedUsername + '\')" style="width:12px; height:12px; cursor: pointer;"><use href="#icon-close"></use></svg></button>');
+	        const titleColor = gender === 'female' ? 'red' : 'blue';
+	        const pageTitle = `<span style="color: ${titleColor};">${username}</span> / ${age} ans / ${city}`;
 
-            // Créer un nouveau contenu d'onglet
-            $('body').append(
-                '<div id="' + formattedUsername + '" class="tabcontent">' +
-                '<div class="icon-buttons">' +
-                '<svg onclick="startWebcam()" style="cursor: pointer;color: #CCCCCC;"><use href="#icon-cam" fill="#cccccc"></use></svg>' +
-                '<svg onclick="startMicrophone()" style="cursor: pointer;"><use href="#icon-mic" fill="#cccccc"></use></svg>' +
-                '<svg onclick="sendFile()" style="cursor: pointer;"><use href="#icon-file" fill="#cccccc"></use></svg>' +
-                '<svg onclick="closeTab(event, \'' + formattedUsername + '\')" style="cursor: pointer;"><use href="#icon-close"></use></svg>' +
-                '</div>' +
-                '<h3>Discussion avec ' + pageTitle + '</h3>' +
-                '<div class="chat-window" id="chat-' + formattedUsername + '"></div>' +
-                '<input type="text" id="message-' + formattedUsername + '" class="message-input" placeholder="Entrez votre message">' +
-                '</div>'
-            );
+	        // Créer un nouvel onglet avec juste le nom de l'utilisateur
+	        $('.tab').append('<button class="tablinks" onclick="openTab(event, \'' + formattedUsername + '\')" id="tab-' + formattedUsername + '">' + username + ' <svg onclick="closeTab(event, \'' + formattedUsername + '\')" style="width:12px; height:12px; cursor: pointer;"><use href="#icon-close"></use></svg></button>');
 
-            // Ajouter l'événement keypress pour envoyer le message
-            $('#message-' + formattedUsername).keypress(function(event) {
-                if (event.which === 13) {
-                    sendMessageToUser(username);
-                }
-            });
-        }
+	        // Créer un nouveau contenu d'onglet
+	        $('body').append(
+	            '<div id="' + formattedUsername + '" class="tabcontent">' +
+	            '<div class="icon-buttons">' +
+	            '<svg onclick="startWebcam()" style="cursor: pointer;color: #CCCCCC;"><use href="#icon-cam" fill="#cccccc"></use></svg>' +
+	            '<svg onclick="startMicrophone()" style="cursor: pointer;"><use href="#icon-mic" fill="#cccccc"></use></svg>' +
+	            '<svg onclick="sendFile()" style="cursor: pointer;"><use href="#icon-file"></use></svg>' +
+	            '<svg onclick="closeTab(event, \'' + formattedUsername + '\')" style="cursor: pointer;"><use href="#icon-close"></use></svg>' +
+	            '</div>' +
+	            '<h3>Discussion avec ' + pageTitle + '</h3>' +
+	            '<div class="chat-window" id="chat-' + formattedUsername + '"></div>' +
+	            '<input type="text" id="message-' + formattedUsername + '" class="message-input" placeholder="Entrez votre message">' +
+	            '</div>'
+	        );
 
-		// Ouvrir l'onglet si nécessaire
-		if (makeActive) {
-		     openTab(null, formattedUsername);
-			$('#tab-' + formattedUsername).addClass('active');
-		 } else {
-		     $('#tab-' + formattedUsername).addClass('notification');
-		 }
-    }
+	        // Ajouter l'événement keypress pour envoyer le message
+	        $('#message-' + formattedUsername).keypress(function(event) {
+	            if (event.which === 13) {
+	                sendMessageToUser(username);
+	            }
+	        });
+	    }
 
-    function openRoomChatTab(roomId) {
-        const formattedRoomId = roomId.replace(/\s/g, '-');
-        // Vérifier si l'onglet existe déjà
-        if ($('#tab-room-' + formattedRoomId).length === 0) {
-            // Créer un nouvel onglet
-            $('.tab').append('<button class="tablinks" onclick="openTab(event, \'room-' + formattedRoomId + '\')" id="tab-room-' + formattedRoomId + '">' + roomId + ' <svg onclick="closeTab(event, \'room-' + formattedRoomId + '\')" style="width:12px; height:12px; cursor: pointer;"><use href="#icon-close"></use></svg></button>');
+	    // Ouvrir l'onglet si nécessaire
+	    if (makeActive) {
+	        openTab(null, formattedUsername);
+	        $('#tab-' + formattedUsername).addClass('active');
+	        currentChat = formattedUsername; // Mettre à jour currentChat
+	    } else {
+	        $('#tab-' + formattedUsername).addClass('notification');
+	    }
+	}
 
-            // Créer un nouveau contenu d'onglet avec la zone utilisateur à droite
-            $('body').append(
-                '<div id="room-' + formattedRoomId + '" class="tabcontent">' +
-                '<div class="icon-buttons">' +
-                '<svg onclick="startWebcam()" style="cursor: pointer;"><use href="#icon-cam" fill="#cccccc"></use></svg>' +
-                '<svg onclick="startMicrophone()" style="cursor: pointer;"><use href="#icon-mic" fill="#cccccc"></use></svg>' +
-                '<svg onclick="sendFile()" style="cursor: pointer;"><use href="#icon-file" fill="#cccccc"></use></svg>' +
-                '<svg onclick="closeTab(event, \'room-' + formattedRoomId + '\')" style="cursor: pointer;"><use href="#icon-close"></use></svg>' +
-                '</div>' +
-                '<div class="chat-room-container">' +
-                '<div class="chat-window" id="chat-room-' + formattedRoomId + '"></div>' +
-                '<div class="room-user-list">' +
-                '<table class="user-table" id="room-users-' + formattedRoomId + '"></table>' +
-                '</div>' +
-                '</div>' +
-                '<input type="text" id="message-room-' + formattedRoomId + '" class="message-input" placeholder="Entrez votre message">' +
-                '</div>'
-            );
+	function openRoomChatTab(roomId) {
+	    const formattedRoomId = roomId.replace(/\s/g, '-');
+	    // Vérifier si l'onglet existe déjà
+	    if ($('#tab-room-' + formattedRoomId).length === 0) {
+	        // Créer un nouvel onglet
+	        $('.tab').append('<button class="tablinks" onclick="openTab(event, \'room-' + formattedRoomId + '\')" id="tab-room-' + formattedRoomId + '">' + roomId + ' <svg onclick="closeTab(event, \'room-' + formattedRoomId + '\')" style="width:12px; height:12px; cursor: pointer;"><use href="#icon-close"></use></svg></button>');
 
-            // Ajouter l'événement keypress pour envoyer le message
-            $('#message-room-' + formattedRoomId).keypress(function(event) {
-                if (event.which === 13) {
-                    sendMessageToRoom(roomId);
-                }
-            });
-        }
+	        // Créer un nouveau contenu d'onglet avec la zone utilisateur à droite
+	        $('body').append(
+	            '<div id="room-' + formattedRoomId + '" class="tabcontent">' +
+	            '<div class="icon-buttons">' +
+	            '<svg onclick="startWebcam()" style="cursor: pointer;"><use href="#icon-cam" fill="#cccccc"></use></svg>' +
+	            '<svg onclick="startMicrophone()" style="cursor: pointer;"><use href="#icon-mic" fill="#cccccc"></use></svg>' +
+	            '<svg onclick="sendFile()" style="cursor: pointer;"><use href="#icon-file"></use></svg>' +
+	            '<svg onclick="closeTab(event, \'room-' + formattedRoomId + '\')" style="cursor: pointer;"><use href="#icon-close"></use></svg>' +
+	            '</div>' +
+	            '<div class="chat-room-container">' +
+	            '<div class="chat-window" id="chat-room-' + formattedRoomId + '"></div>' +
+	            '<div class="room-user-list">' +
+	            '<table class="user-table" id="room-users-' + formattedRoomId + '"></table>' +
+	            '</div>' +
+	            '</div>' +
+	            '<input type="text" id="message-room-' + formattedRoomId + '" class="message-input" placeholder="Entrez votre message">' +
+	            '</div>'
+	        );
 
-        // Ouvrir l'onglet
-        openTab(null, 'room-' + formattedRoomId);
-        $('#tab-room-' + formattedRoomId).addClass('active');
-    }
+	        // Ajouter l'événement keypress pour envoyer le message
+	        $('#message-room-' + formattedRoomId).keypress(function(event) {
+	            if (event.which === 13) {
+	                sendMessageToRoom(roomId);
+	            }
+	        });
+	    }
+
+	    // Ouvrir l'onglet
+	    openTab(null, 'room-' + formattedRoomId);
+	    $('#tab-room-' + formattedRoomId).addClass('active');
+	    currentChat = 'chat-room-' + formattedRoomId; // Mettre à jour currentChat
+	}
 
 	function displayMessage(msg) {
-	    const nameColor = (msg.gender === 'female' ? 'red' : 'blue');
+	    const nameColor = msg.gender === 'female' ? 'red' : 'blue';
 	    const fromUser = msg.from ? msg.from.replace(/\s/g, '-') : 'Unknown';
 	    const roomName = msg.roomName ? msg.roomName.replace(/\s/g, '-') : null;
-	    const messageHtml = '<p><span style="color:' + nameColor + ';">' + msg.from + '</span>: ' + msg.content + '</p>';
+	    const fileUrl = msg.fileUrl ? msg.fileUrl : '';
+	    const messageHtml = msg.fileType
+	        ? `<p><span style="color:${nameColor};">${msg.from}</span>: <a href="${fileUrl}" target="_blank"><img src="${msg.fileType === 'audio' ? 'music.png' : msg.fileType === 'image' ? 'image.png' : 'movie.png'}" alt="file icon" style="width: 32px; height: 32px;" /></a></p>`
+	        : `<p><span style="color:${nameColor};">${msg.from}</span>: ${msg.content}</p>`;
 
 	    if (roomName) {
 	        const chatWindowId = '#chat-room-' + roomName;
@@ -314,7 +334,6 @@ $(document).ready(function() {
 	        }
 	    }
 	}
-
 
     window.closeTab = function(event, tabName) {
         event.stopPropagation();
@@ -394,8 +413,74 @@ $(document).ready(function() {
         alert('Démarrer le micro');
     }
 
-    function sendFile() {
-        alert('Envoyer un fichier');
-    }
+	// Gérer la sélection du fichier
+	$('#fileInput').on('change', function(event) {
+	    const file = event.target.files[0];
+	    if (file) {
+	        uploadFile(file);
+	    }
+	});
+
+	function uploadFile(file) {
+	    if (file.size > 10 * 1024 * 1024) { // Vérifie la taille du fichier (10 Mo maximum)
+	        alert('Le fichier est trop grand. Maximum 10 Mo.');
+	        return;
+	    }
+
+	    const formData = new FormData();
+	    formData.append('file', file);
+
+	    $.ajax({
+	        url: 'upload', // URL de l'endpoint pour le téléchargement
+	        type: 'POST',
+	        data: formData,
+	        processData: false,
+	        contentType: false,
+	        success: function(response) {
+	            const fileType = file.type.split('/')[0];
+	            let icon = '';
+	            if (fileType === 'audio') {
+	                icon = 'music.png';
+	            } else if (fileType === 'image') {
+	                icon = 'image.png';
+	            } else if (fileType === 'video') {
+	                icon = 'movie.png';
+	            }
+
+	            const userColor = user.gender === 'female' ? 'red' : 'blue';
+	            const fileName = response.filePath.split('/').pop(); // Récupère le nom du fichier
+	            const fileUrl = 'download?file=' + encodeURIComponent(fileName); // Encodage du nom de fichier
+
+	            const messageHtml = `
+	                <p>
+	                    <span style="color: ${userColor};">${user.username}</span>: 
+	                    <a href="${fileUrl}" target="_blank">
+	                        <img src="${icon}" alt="file icon" style="width: 32px; height: 32px;" />
+	                    </a>
+	                </p>`;
+
+	            // Ajoute le message dans le chat correspondant
+	            $('#chat-' + currentChat).append(messageHtml);
+	            scrollToBottom(document.getElementById('chat-' + currentChat));
+
+	            // Envoyer un message WebSocket pour informer les autres utilisateurs
+	            const message = {
+	                type: 'message',
+	                from: user.username,
+	                content: fileName,  // Envoyer le nom du fichier comme contenu
+	                fileType: fileType,
+	                fileUrl: fileUrl,   // Utiliser l'URL du fichier encodée ici
+	                gender: user.gender,
+	                roomName: currentChat.includes('room-') ? currentChat.replace('chat-room-', '').replace(/-/g, ' ') : null,
+	                to: currentChat.includes('room-') ? null : currentChat.replace(/chat-/, '').replace(/-/g, ' ')
+	            };
+	            socket.send(JSON.stringify(message));
+	        },
+	        error: function(error) {
+	            alert('Erreur lors du téléchargement du fichier.');
+	        }
+	    });
+	}
+
 });
 

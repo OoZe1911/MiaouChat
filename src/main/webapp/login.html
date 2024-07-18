@@ -16,28 +16,28 @@
     <div class="login-container">
         <h2>Miaou Chat</h2>
         <p class="subtitle">Site de discussion gratuit sans inscription</p>
-        <form id="loginForm" method="post">
-            <label for="username">Pseudo:</label>
-            <input type="text" id="username" name="username" maxlength="30" required>
-            <label for="gender">Sexe:</label>
-            <select id="gender" name="gender" required>
-                <option value="male">Homme</option>
-                <option value="female">Femme</option>
-            </select>
-
-            <label for="age">Âge:</label>
-            <input type="number" id="age" name="age" required>
-
-            <label for="postalCode">Code Postal:</label>
-            <input type="text" id="postalCode" name="postalCode" required>
-
-            <input type="text" id="countryCode" name="countryCode" readonly>
-
-            <label for="city">Ville:</label>
-            <input type="text" id="city" name="city" readonly>
-
-            <button type="submit" id="submitButton" disabled>Se connecter</button>
-        </form>
+		<form id="loginForm" method="post" action="login">
+		    <label for="username">Pseudo:</label>
+		    <input type="text" id="username" name="username" maxlength="30" required>
+		    <label for="gender">Sexe:</label>
+		    <select id="gender" name="gender" required>
+		        <option value="male">Homme</option>
+		        <option value="female">Femme</option>
+		    </select>
+		
+		    <label for="age">Âge:</label>
+		    <input type="number" id="age" name="age" required>
+		
+		    <label for="postalCode">Code Postal:</label>
+		    <input type="text" id="postalCode" name="postalCode" required>
+		
+		    <input type="text" id="countryCode" name="countryCode" readonly>
+		
+		    <label for="city">Ville:</label>
+		    <input type="text" id="city" name="city" readonly>
+		
+		    <button type="submit" id="submitButton" disabled>Se connecter</button>
+		</form>
 
         <div class="error-popup" id="errorPopup"></div>
     </div>
@@ -55,161 +55,144 @@
     </div>
 
     <script>
-        $(document).ready(function() {
-            const supportedCountries = ["US", "DE", "CA", "GB", "FR", "NL", "BE", "AU", "SE", "ES", "IT", "CH", "PT", "PL", "MX", "DK", "NO", "RU", "IE", "HU", "BR", "JP", "AT"];
-            let timeout;
-
-            function getClientIP(callback) {
-                $.get('getClientIP', function(response) {
-                    if (response && response.ip) {
-                        callback(response.ip);
-                    } else {
-                        callback(undefined);
-                    }
-                }).fail(function() {
-                    callback(undefined);
-                });
-            }
-
-            function getCountryCodeFromIP(ip, callback) {
-                const isLocalhost = window.location.hostname === 'localhost';
-                const url = isLocalhost 
-                    ? `http://ip-api.com/json/${ip}`  // URL directe pour localhost
-                    : `/ip-api/json/${ip}`;  // URL passant par le proxy pour les autres environnements
-
-                $.get(url, function(response) {
-                    const countryCode = response.countryCode;
-                    callback(countryCode);
-                }).fail(function() {
-                    callback("Unknown");
-                });
-            }
-
-            function updateCountryCode() {
-                getClientIP(function(ip) {
-                    if (ip) {
-                        getCountryCodeFromIP(ip, function(countryCode) {
-                            $('#countryCode').val(countryCode);
-                        });
-                    } else {
-                        $('#countryCode').val("Unknown");
-                    }
-                });
-            }
-
-            updateCountryCode();
-
-            $('#postalCode').on('input', function() {
-                clearTimeout(timeout);
-                const postalCode = $(this).val();
-                timeout = setTimeout(function() {
-                    if ($.isNumeric(postalCode) && postalCode.length >= 4 && postalCode.length <= 5) {
-                        getClientIP(function(ip) {
-                            getCountryCodeFromIP(ip, function(countryCode) {
-                                if (!supportedCountries.includes(countryCode)) {
-                                    $('#city').val('Unknown');
-                                    $('#submitButton').prop('disabled', false);
-                                } else {
-                                    const url = `https://api.zippopotam.us/${countryCode.toLowerCase()}/${postalCode}`;
-                                    $.getJSON(url, function(data) {
-                                        if (data.places && data.places.length > 0) {
-                                            let city = data.places[0]['place name'];
-                                            if (city.startsWith("Paris") || city.startsWith("Lyon") || city.startsWith("Marseille")) {
-                                                city = city.split(/[\s,]/)[0];
-                                            }
-                                            $('#city').val(city);
-                                            $('#submitButton').prop('disabled', false);
-                                        } else {
-                                            $('#city').val('Unknown');
-                                            $('#submitButton').prop('disabled', false);
-                                        }
-                                    }).fail(function() {
-                                        $('#city').val('Unknown');
-                                        $('#submitButton').prop('disabled', false);
-                                    });
-                                }
-                            });
-                        });
-                    } else {
-                        $('#city').val('');
-                        $('#submitButton').prop('disabled', true);
-                    }
-                }, 500); // Délai de 500ms après la dernière saisie
-            });
-
-            $('#loginForm').on('submit', function(event) {
-                event.preventDefault();
-
-                const age = $('#age').val();
-                if (age < 18 || age > 99) {
-                    showError('L\'âge doit être supérieur à 18 ans et au maximum 99 ans.');
-                    return;
-                }
-
-                const username = $('#username').val();
-                if (!/^[a-zA-Z0-9\s\-]+$/.test(username)) {
-                    showError('Le pseudo ne peut contenir que des lettres, des espaces, des chiffres et des tirets.');
-                    return;
-                }
-
-                if (/([0-9]|1[0-7])(\s|-)*a/i.test(username)) {
-                    showError('Le pseudo ne peut pas contenir un âge inférieur à 18 ans.');
-                    return;
-                }
-
-                const gender = $('#gender').val();
-                const postalCode = $('#postalCode').val();
-                const city = $('#city').val();
-                const countryCode = $('#countryCode').val();
-
-                if (!$.isNumeric(postalCode)) {
-                    showError('Le code postal doit être un nombre.');
-                    return;
-                }
-
-                const user = {
-                    username: username,
-                    gender: gender,
-                    age: parseInt(age),  // Convertir en entier
-                    postalCode: postalCode,
-                    city: city,
-                    countryCode: countryCode
-                };
-
-                const loc = window.location;
-                const wsStart = loc.protocol === 'https:' ? 'wss://' : 'ws://';
-                const endPoint = wsStart + loc.host + loc.pathname.replace('login.html', 'chat');
-                const socket = new WebSocket(endPoint);
-
-                socket.onopen = function() {
-                    socket.send(JSON.stringify({ type: 'connect', username: user.username, age: user.age, gender: user.gender, city: user.city }));
-                };
-
-                socket.onmessage = function(event) {
-                    const msg = JSON.parse(event.data);
-                    if (msg.type === 'error') {
-                        showError(msg.error);
-                    } else {
-                        sessionStorage.setItem('user', JSON.stringify(user));
-                        window.location.href = 'chat.html';
-                    }
-                };
-
-                socket.onerror = function() {
-                    showError('Erreur de connexion. Veuillez réessayer.');
-                };
-            });
-
-            $('#age').on('input', function() {
-                if (this.value.length > 2) {
-                    this.value = this.value.slice(0, 2);
-                }
-            });
-
-            function showError(message) {
-                $('#errorPopup').text(message).fadeIn().delay(3000).fadeOut();
-            }
-        });
+	    $(document).ready(function() {
+	        const supportedCountries = ["US", "DE", "CA", "GB", "FR", "NL", "BE", "AU", "SE", "ES", "IT", "CH", "PT", "PL", "MX", "DK", "NO", "RU", "IE", "HU", "BR", "JP", "AT"];
+	        let timeout;
+	
+	        function getClientIP(callback) {
+	            $.get('getClientIP', function(response) {
+	                if (response && response.ip) {
+	                    callback(response.ip);
+	                } else {
+	                    callback(undefined);
+	                }
+	            }).fail(function() {
+	                callback(undefined);
+	            });
+	        }
+	
+	        function getCountryCodeFromIP(ip, callback) {
+	            const isLocalhost = window.location.hostname === 'localhost';
+	            const url = isLocalhost 
+	                ? `http://ip-api.com/json/${ip}`  // URL directe pour localhost
+	                : `/ip-api/json/${ip}`;  // URL passant par le proxy pour les autres environnements
+	
+	            $.get(url, function(response) {
+	                const countryCode = response.countryCode;
+	                callback(countryCode);
+	            }).fail(function() {
+	                callback("Unknown");
+	            });
+	        }
+	
+	        function updateCountryCode() {
+	            getClientIP(function(ip) {
+	                if (ip) {
+	                    getCountryCodeFromIP(ip, function(countryCode) {
+	                        $('#countryCode').val(countryCode);
+	                    });
+	                } else {
+	                    $('#countryCode').val("Unknown");
+	                }
+	            });
+	        }
+	
+	        updateCountryCode();
+	
+	        $('#postalCode').on('input', function() {
+	            clearTimeout(timeout);
+	            const postalCode = $(this).val();
+	            timeout = setTimeout(function() {
+	                if ($.isNumeric(postalCode) && postalCode.length >= 4 && postalCode.length <= 5) {
+	                    getClientIP(function(ip) {
+	                        getCountryCodeFromIP(ip, function(countryCode) {
+	                            if (!supportedCountries.includes(countryCode)) {
+	                                $('#city').val('Unknown');
+	                                $('#submitButton').prop('disabled', false);
+	                            } else {
+	                                const url = `https://api.zippopotam.us/${countryCode.toLowerCase()}/${postalCode}`;
+	                                $.getJSON(url, function(data) {
+	                                    if (data.places && data.places.length > 0) {
+	                                        let city = data.places[0]['place name'];
+	                                        if (city.startsWith("Paris") || city.startsWith("Lyon") || city.startsWith("Marseille")) {
+	                                            city = city.split(/[\s,]/)[0];
+	                                        }
+	                                        $('#city').val(city);
+	                                        $('#submitButton').prop('disabled', false);
+	                                    } else {
+	                                        $('#city').val('Unknown');
+	                                        $('#submitButton').prop('disabled', false);
+	                                    }
+	                                }).fail(function() {
+	                                    $('#city').val('Unknown');
+	                                    $('#submitButton').prop('disabled', false);
+	                                });
+	                            }
+	                        });
+	                    });
+	                } else {
+	                    $('#city').val('');
+	                    $('#submitButton').prop('disabled', true);
+	                }
+	            }, 500); // Délai de 500ms après la dernière saisie
+	        });
+	
+	        $('#loginForm').on('submit', function(event) {
+	            event.preventDefault();
+	
+	            const age = $('#age').val();
+	            if (age < 18 || age > 99) {
+	                showError('L\'âge doit être supérieur à 18 ans et au maximum 99 ans.');
+	                return;
+	            }
+	
+	            const username = $('#username').val();
+	            if (!/^[a-zA-Z0-9\s\-]+$/.test(username)) {
+	                showError('Le pseudo ne peut contenir que des lettres, des espaces, des chiffres et des tirets.');
+	                return;
+	            }
+	
+	            if (/([0-9]|1[0-7])(\s|-)*a/i.test(username)) {
+	                showError('Le pseudo ne peut pas contenir un âge inférieur à 18 ans.');
+	                return;
+	            }
+	
+	            const gender = $('#gender').val();
+	            const postalCode = $('#postalCode').val();
+	            const city = $('#city').val();
+	            const countryCode = $('#countryCode').val();
+	
+	            if (!$.isNumeric(postalCode)) {
+	                showError('Le code postal doit être un nombre.');
+	                return;
+	            }
+	
+	            const user = {
+	                username: username,
+	                gender: gender,
+	                age: parseInt(age),  // Convertir en entier
+	                postalCode: postalCode,
+	                city: city,
+	                countryCode: countryCode
+	            };
+	
+	            // Stocker l'utilisateur dans la sessionStorage
+	            sessionStorage.setItem('user', JSON.stringify(user));
+	
+	            // Soumettre le formulaire pour appeler la servlet
+	            $('#loginForm')[0].submit();
+	        });
+	
+	        $('#age').on('input', function() {
+	            if (this.value.length > 2) {
+	                this.value = this.value.slice(0, 2);
+	            }
+	        });
+	
+	        function showError(message) {
+	            $('#errorPopup').text(message).fadeIn().delay(3000).fadeOut();
+	        }
+	    });
     </script>
 </body>
 </html>

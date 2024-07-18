@@ -27,7 +27,5 @@ public class LoginServlet extends HttpServlet {
         session.setAttribute("user", user);
 
         response.sendRedirect("chat.html");
-        //String httpsUrl = "https://" + request.getServerName() + request.getContextPath() + "/chat.html";
-        //response.sendRedirect(httpsUrl);
     }
 }

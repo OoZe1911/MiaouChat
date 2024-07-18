@@ -39,6 +39,7 @@ public class ServletFilter implements Filter {
         // Exclude static resources, login page and specific endpoints
         boolean isLoginPage = uri.contains("login");
         boolean isStaticResource = uri.endsWith(".css") || uri.endsWith(".js") || uri.endsWith(".ico") || uri.endsWith(".png") || uri.endsWith("getclientip");
+        // Used to check if a user name is already used
         boolean isWebSocketRequest = uri.contains("/chat");
 
         if (isLoginPage || isStaticResource || isWebSocketRequest) {
