@@ -99,12 +99,25 @@ $(document).ready(function() {
         });
     }
 
-	function updateUserList(users) {
+
+	let users = [];
+
+	function updateUserList(newUsers) {
+	    users = newUsers; // Mettre à jour la variable globale
 	    $('#userList').empty();
+	    
+	    // Trier les utilisateurs par ordre de connexion (les plus récents en haut)
+	    users.sort(function(a, b) {
+	        return new Date(b.connectedAt) - new Date(a.connectedAt);
+	    });
+
+	    // Récupérer les filtres sélectionnés
+	    const filter = $('input[name="filter"]:checked').val();
+	    const nameFilter = $('#nameFilter').val().trim().toLowerCase();
 	    
 	    let maleCount = 0;
 	    let femaleCount = 0;
-	    
+
 	    users.forEach(function(user) {
 	        const rowClass = user.gender === 'male' ? 'user-male' : 'user-female';
 	        if (user.gender === 'male') {
@@ -112,13 +125,20 @@ $(document).ready(function() {
 	        } else {
 	            femaleCount++;
 	        }
-	        $('#userList').append(
-	            '<tr class="' + rowClass + '">' +
-	            '<td><a href="#" class="user-link" data-username="' + user.username + '">' + user.username + '</a></td>' +
-	            '<td>' + user.age + '</td>' +
-	            '<td>' + user.city + '</td>' +
-	            '</tr>'
-	        );
+
+	        // Appliquer les filtres
+	        if (
+	            (filter === 'all' || (filter === 'male' && user.gender === 'male') || (filter === 'female' && user.gender === 'female')) &&
+	            (nameFilter === '' || user.username.toLowerCase().includes(nameFilter)
+)	        ) {
+	            $('#userList').append(
+	                '<tr class="' + rowClass + '">' +
+	                '<td><a href="#" class="user-link" data-username="' + user.username + '">' + user.username + '</a></td>' +
+	                '<td>' + user.age + '</td>' +
+	                '<td>' + user.city + '</td>' +
+	                '</tr>'
+	            );
+	        }
 	    });
 
 	    // Mise à jour du texte avec le nombre d'hommes et de femmes connectés
@@ -132,6 +152,24 @@ $(document).ready(function() {
 	    });
 	}
 
+	// Ajouter des gestionnaires d'événements pour changer les filtres
+	$(document).ready(function() {
+	    $('input[name="filter"]').change(function() {
+	        updateUserList(users);
+	    });
+	    $('#nameFilter').on('input', function() {
+	        updateUserList(users);
+	    });
+	});
+
+
+
+	// Ajouter un gestionnaire d'événements pour changer le filtre
+	$(document).ready(function() {
+	    $('input[name="filter"]').change(function() {
+	        updateUserList(users); // Assurez-vous que 'users' est une variable globale ou accessible ici
+	    });
+	});
 
 	function updateRoomUserList(roomName, users) {
 	    const formattedRoomName = roomName.replace(/\s/g, '-');

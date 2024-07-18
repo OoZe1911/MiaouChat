@@ -73,6 +73,25 @@ body, html {
     background-color: #45a049;
 }
 
+input[readonly] {
+    background-color: #f4f4f4;
+    border: none;
+    color: #555;
+    pointer-events: none;
+    outline: none;
+}
+
+.info-container {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.info-text {
+    font-size: 14px;
+    color: #555;
+    margin-top: 20px;
+}
+
 /* Style des onglets et du contenu des onglets */
 .tab {
     overflow: hidden;

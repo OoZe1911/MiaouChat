@@ -26,19 +26,25 @@
                 </div>
             </div>
 	<div class="right-column">
-	    <h3 id="userCount">Utilisateurs Connectés</h3>
-	    <div class="user-list-container">
-	        <table class="user-table">
-	            <thead>
-	                <tr>
-	                    <th>Nom</th>
-	                    <th>Âge</th>
-	                    <th>Ville</th>
-	                </tr>
-	            </thead>
-	            <tbody id="userList"></tbody>
-	        </table>
-	    </div>
+		<h3 id="userCount">Utilisateurs Connectés</h3>
+		<div id="userFilter">
+		    <label><input type="radio" name="filter" value="all" checked> Tous</label>
+		    <label><input type="radio" name="filter" value="male"> Hommes</label>
+		    <label><input type="radio" name="filter" value="female"> Femmes</label>
+		    <label>- Filtrer par nom : <input type="text" id="nameFilter" maxlength="30" placeholder="Nom"></label>
+		</div>
+		<div class="user-list-container">
+		    <table class="user-table">
+		        <thead>
+		            <tr>
+		                <th>Nom</th>
+		                <th>Âge</th>
+		                <th>Ville</th>
+		            </tr>
+		        </thead>
+		        <tbody id="userList"></tbody>
+		    </table>
+		</div>
 	</div>
 
     <!-- Include SVG icons inline -->
