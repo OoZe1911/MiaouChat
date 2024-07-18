@@ -14,11 +14,12 @@ function openTab(evt, tabName) {
     }
     tablinks = document.getElementsByClassName("tablinks");
     for (i = 0; i < tablinks.length; i++) {
-        tablinks[i].className = tablinks[i].className.replace(" active", "").replace(" notification", "");
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
     }
     document.getElementById(tabName).style.display = "block";
     if (evt) {
         evt.currentTarget.className += " active";
+        evt.currentTarget.className = evt.currentTarget.className.replace(" notification", ""); // Retire la classe notification uniquement de l'onglet cliqué
     }
     
     // Définir le focus sur le champ de saisie de message
@@ -292,14 +293,20 @@ $(document).ready(function() {
         }
     };
 
-    window.createRoom = function() {
-        const roomName = $('#newRoomName').val().trim();
-        if (roomName !== '') {
-            // Envoyer la demande de création de salon au serveur via WebSocket
-            socket.send(JSON.stringify({ type: 'createRoom', roomName: roomName }));
-            $('#newRoomName').val('');
-        }
-    };
+	window.createRoom = function() {
+	    const roomName = $('#newRoomName').val().trim();
+	    if (roomName !== '') {
+	        // Envoyer la demande de création de salon au serveur via WebSocket
+	        socket.send(JSON.stringify({ type: 'createRoom', roomName: roomName }));
+
+	        // Joindre le salon après sa création
+	        setTimeout(() => {
+	            openRoomChatTab(roomName);
+	            socket.send(JSON.stringify({ type: 'joinRoom', roomName: roomName, username: user.username }));
+	        }, 500); // Attendre 500ms pour s'assurer que le salon est créé
+	        $('#newRoomName').val('');
+	    }
+	};
 
     function sendMessageToUser(username) {
         const formattedUsername = username.replace(/\s/g, '-');

@@ -47,7 +47,6 @@ public class WebSocketServer {
 
     @OnMessage
     public void onMessage(String message, Session session) {
-        System.out.println("Message received: " + message);
         Gson gson = new Gson();
         Message msg = gson.fromJson(message, Message.class);
 
@@ -73,12 +72,9 @@ public class WebSocketServer {
                 createRoom(msg.getRoomName());
                 break;
             case "message":
-                System.out.println("Handling message: " + msg);
                 if (msg.getRoomName() != null) {
-                    System.out.println("Sending message to room: " + msg.getRoomName());
                     sendMessageToRoom(msg.getRoomName(), msg.getFrom(), msg.getContent(), msg.getGender());
                 } else {
-                    System.out.println("Sending message to user: " + msg.getTo());
                     sendMessageToUser(msg.getFrom(), msg.getTo(), msg.getContent(), msg.getGender());
                 }
                 break;

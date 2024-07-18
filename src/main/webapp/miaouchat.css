@@ -76,30 +76,33 @@ body, html {
 /* Style des onglets et du contenu des onglets */
 .tab {
     overflow: hidden;
-    background-color: #f1f1f1;
+    background-color: #f4f4f4; /* Fond foncé par défaut */
     border: 1px solid #ccc;
 }
 
 .tab button {
-    background-color: inherit;
+    background-color: #ccc; /* Couleur de fond foncée pour les onglets inactifs */
     border: none;
     outline: none;
     cursor: pointer;
     padding: 14px 16px;
     transition: 0.3s;
     font-size: 17px;
+    color: black; /* Texte en blanc pour contraster avec le fond foncé */
 }
 
 .tab button:hover {
-    background-color: #ddd;
+    background-color: #eee; /* Couleur légèrement plus claire au survol */
 }
 
 .tab button.active {
-    background-color: #ccc;
+    background-color: #eee; /* Couleur de fond claire pour l'onglet actif */
+    color: black; /* Texte noir pour l'onglet actif */
 }
 
 .tab button.notification {
     background-color: yellow; /* Couleur de fond pour la notification */
+    color: black; /* Texte noir pour la notification */
 }
 
 .tabcontent {
@@ -109,6 +112,7 @@ body, html {
     border-top: none;
     position: relative;
 }
+
 
 /* Style de la page principale */
 .container {
@@ -175,8 +179,6 @@ body, html {
 
 .chat-room-container {
     display: flex;
-    flex-direction: row;
-    height: calc(100vh - 120px); /* Ajuster en fonction de la hauteur de la fenêtre */
 }
 
 .chat-window {
