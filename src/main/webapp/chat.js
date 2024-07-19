@@ -220,7 +220,7 @@ $(document).ready(function() {
 	        const gender = userElement.hasClass('user-female') ? 'female' : 'male';
 
 	        const titleColor = gender === 'female' ? 'red' : 'blue';
-	        const pageTitle = `<span style="color: ${titleColor};">${username}</span> / ${age} ans / ${city}`;
+	        const pageTitle = `<span style="color: ${titleColor};">${username}</span> ${age} ans <img src="town.png" alt="town icon" style="width:16px;height:16px;"> ${city}`;
 
 	        // Créer un nouvel onglet avec juste le nom de l'utilisateur
 	        $('.tab').append('<button class="tablinks" onclick="openTab(event, \'' + formattedUsername + '\')" id="tab-' + formattedUsername + '">' + username + ' <svg onclick="closeTab(event, \'' + formattedUsername + '\')" style="width:12px; height:12px; cursor: pointer;"><use href="#icon-close"></use></svg></button>');
@@ -304,7 +304,7 @@ $(document).ready(function() {
 	    const roomName = msg.roomName ? msg.roomName.replace(/\s/g, '-') : null;
 	    const fileUrl = msg.fileUrl ? msg.fileUrl : '';
 	    const messageHtml = msg.fileType
-	        ? `<p><span style="color:${nameColor};">${msg.from}</span>: <a href="${fileUrl}" target="_blank"><img src="${msg.fileType === 'audio' ? 'music.png' : msg.fileType === 'image' ? 'image.png' : 'movie.png'}" alt="file icon" style="width: 32px; height: 32px;" /></a></p>`
+	        ? `<p><span style="color:${nameColor};">${msg.from}</span>: <a href="#" class="media-link" data-filetype="${msg.fileType}" data-fileurl="${fileUrl}"><img src="${msg.fileType === 'audio' ? 'music.png' : msg.fileType === 'image' ? 'image.png' : 'movie.png'}" alt="file icon" style="width: 32px; height: 32px;" /></a></p>`
 	        : `<p><span style="color:${nameColor};">${msg.from}</span>: ${msg.content}</p>`;
 
 	    if (roomName) {
@@ -312,17 +312,17 @@ $(document).ready(function() {
 	        $(chatWindowId).append(messageHtml);
 	        scrollToBottom(document.getElementById('chat-room-' + roomName));
 
-	        // Ajouter la classe de notification si l'utilisateur n'est pas dans cet onglet
 	        if (!$(`#tab-room-${roomName}`).hasClass('active')) {
 	            $(`#tab-room-${roomName}`).addClass('notification');
 	        }
 	    } else {
-	        const chatWindowId = '#chat-' + fromUser;
+	        const toUser = msg.to ? msg.to.replace(/\s/g, '-') : null;
+	        const chatWindowId = toUser ? '#chat-' + toUser : '#chat-' + fromUser;
 	        const chatWindow = $(chatWindowId);
 	        const tabExists = chatWindow.length > 0;
 
 	        if (!tabExists) {
-	            openUserChatTab(msg.from, false);
+	            openUserChatTab(toUser || fromUser, false);
 	        }
 
 	        $(chatWindowId).append(messageHtml);
@@ -330,10 +330,64 @@ $(document).ready(function() {
 	        if ($(chatWindowId).is(':visible')) {
 	            scrollToBottom(chatWindow[0]);
 	        } else {
-	            $('#tab-' + fromUser).addClass('notification');
+	            $('#tab-' + (toUser || fromUser)).addClass('notification');
 	        }
 	    }
+
+	    // Ajouter des handlers pour les liens de médias
+	    $('.media-link').off('click').on('click', function(event) {
+	        event.preventDefault();
+	        const fileType = $(this).data('filetype');
+	        const fileUrl = $(this).data('fileurl');
+	        openMedia(fileType, fileUrl);
+	    });
 	}
+
+	function openMedia(fileType, fileUrl) {
+	    if (fileType === 'audio' || fileType === 'video') {
+	        openMediaPopup(fileType, fileUrl);
+	    } else if (fileType === 'image') {
+	        window.open(fileUrl, '_blank');
+	    }
+	}
+
+	function openMediaPopup(fileType, fileUrl) {
+	    let mediaElement;
+	    if (fileType === 'audio') {
+	        mediaElement = `
+	            <audio controls autoplay style="width:100%;">
+	                <source src="${fileUrl}" type="audio/mpeg">
+	                Your browser does not support the audio element.
+	            </audio>`;
+	    } else if (fileType === 'video') {
+	        mediaElement = `
+	            <video controls autoplay style="width:100%;">
+	                <source src="${fileUrl}" type="video/mp4">
+	                Your browser does not support the video element.
+	            </video>`;
+	    } else {
+	        return;
+	    }
+
+	    const popupHtml = `
+	        <div id="mediaPopup" style="position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:80%; max-width:600px; background-color:white; padding:20px; box-shadow:0 0 10px rgba(0, 0, 0, 0.5); z-index:1000;">
+	            ${mediaElement}
+	            <button onclick="closeMediaPopup()" style="margin-top:10px;">Fermer</button>
+	        </div>
+	        <div id="mediaOverlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0, 0, 0, 0.5); z-index:999;" onclick="closeMediaPopup()"></div>
+	    `;
+	    $('body').append(popupHtml);
+	}
+
+	function closeMediaPopup() {
+	    $('#mediaPopup').remove();
+	    $('#mediaOverlay').remove();
+	}
+
+	// Attacher les fonctions à l'objet window pour assurer leur disponibilité dans le contexte global
+	window.openMedia = openMedia;
+	window.openMediaPopup = openMediaPopup;
+	window.closeMediaPopup = closeMediaPopup;
 
     window.closeTab = function(event, tabName) {
         event.stopPropagation();
@@ -451,33 +505,25 @@ $(document).ready(function() {
 	            const fileName = response.filePath.split('/').pop(); // Récupère le nom du fichier
 	            const fileUrl = 'download?file=' + encodeURIComponent(fileName); // Encodage du nom de fichier
 
-	            const messageHtml = `
-	                <p>
-	                    <span style="color: ${userColor};">${user.username}</span>: 
-	                    <a href="${fileUrl}" target="_blank">
-	                        <img src="${icon}" alt="file icon" style="width: 32px; height: 32px;" />
-	                    </a>
-	                </p>`;
-
-	            // Ajoute le message dans le chat correspondant
-	            $('#chat-' + currentChat).append(messageHtml);
-	            scrollToBottom(document.getElementById('chat-' + currentChat));
-
-	            // Envoyer un message WebSocket pour informer les autres utilisateurs
 	            const message = {
 	                type: 'message',
 	                from: user.username,
-	                content: fileName,  // Envoyer le nom du fichier comme contenu
+	                content: fileName,
 	                fileType: fileType,
-	                fileUrl: fileUrl,   // Utiliser l'URL du fichier encodée ici
+	                fileUrl: fileUrl,
 	                gender: user.gender,
 	                roomName: currentChat.includes('room-') ? currentChat.replace('chat-room-', '').replace(/-/g, ' ') : null,
 	                to: currentChat.includes('room-') ? null : currentChat.replace(/chat-/, '').replace(/-/g, ' ')
 	            };
+
+	            // Afficher le message dans le chat localement
+	            displayMessage(message);
+
+	            // Envoyer un message WebSocket pour informer les autres utilisateurs
 	            socket.send(JSON.stringify(message));
 	        },
 	        error: function(error) {
-	            alert('Erreur lors du téléchargement du fichier.');
+	            alert('Type de fichier non supporté.');
 	        }
 	    });
 	}
