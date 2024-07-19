@@ -505,6 +505,8 @@ $(document).ready(function() {
 	    const file = event.target.files[0];
 	    if (file) {
 	        uploadFile(file);
+			// Réinitialiser la valeur du champ de saisie de fichier pour permettre de sélectionner le même fichier à nouveau
+			$(this).val('');
 	    }
 	});
 
