@@ -16,7 +16,7 @@
         <div class="container">
             <div class="left-column">
                 <h3>Salons</h3>
-                <input type="text" id="newRoomName" placeholder="Nom du salon" maxlength="30">
+                <input type="text" id="newRoomName" placeholder="Nom du salon" maxlength="30" oninput="validateRoomName()" />
                 <button onclick="createRoom()">Créer un salon</button>
                 <div>Les salons vides sont automatiquement supprimés.</div>
                 <div class="room-list-container">
@@ -25,30 +25,31 @@
                     </table>
                 </div>
             </div>
-	<div class="right-column">
-		<h3 id="userCount">Utilisateurs Connectés</h3>
-		<div id="userFilter">
-		    <label><input type="radio" name="filter" value="all" checked> Tous</label>
-		    <label><input type="radio" name="filter" value="male"> Hommes</label>
-		    <label><input type="radio" name="filter" value="female"> Femmes</label>
-		    <label>- Filtrer par nom : <input type="text" id="nameFilter" maxlength="30" placeholder="Nom"></label>
-		</div>
-		<div class="user-list-container">
-		    <table class="user-table">
-		        <thead>
-		            <tr>
-		                <th>Nom</th>
-		                <th>Âge</th>
-		                <th>Ville</th>
-		            </tr>
-		        </thead>
-		        <tbody id="userList"></tbody>
-		    </table>
-		</div>
-	</div>
+            <div class="right-column">
+                <h3 id="userCount">Utilisateurs Connectés</h3>
+                <div id="userFilter">
+                    <label><input type="radio" name="filter" value="all" checked> Tous</label>
+                    <label><input type="radio" name="filter" value="male"> Hommes</label>
+                    <label><input type="radio" name="filter" value="female"> Femmes</label>
+                    <label>- Filtrer par nom : <input type="text" id="nameFilter" maxlength="30" placeholder="Nom"></label>
+                </div>
+                <div class="user-list-container">
+                    <table class="user-table">
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>Âge</th>
+                                <th>Ville</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userList"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 
-
-	<input type="file" id="fileInput" accept="audio/*,image/*,video/*" style="display:none;" />
+    <input type="file" id="fileInput" accept="audio/*,image/*,video/*" style="display:none;" />
 
     <!-- Include SVG icons inline -->
     <svg style="display: none;">

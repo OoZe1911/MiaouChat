@@ -10,6 +10,13 @@ let currentContext = {
     id: '' // userId or roomId
 };
 
+// Fonction pour valider le nom du salon
+function validateRoomName() {
+    const input = document.getElementById('newRoomName');
+    const regex = /[^a-zA-Z0-9 ]/g;
+    input.value = input.value.replace(regex, '');
+}
+
 // Fonction pour ouvrir un onglet
 function openTab(evt, tabName) {
     var i, tabcontent, tablinks;
@@ -66,6 +73,9 @@ $(document).ready(function() {
 
     document.getElementById("defaultOpen").click();
 
+	// Ajoutez cet écouteur d'événement pour les modifications du champ de saisie
+	document.getElementById('newRoomName').addEventListener('input', validateRoomName);
+	
     const loc = window.location;
     const wsStart = loc.protocol === 'https:' ? 'wss://' : 'ws://';
     const endPoint = wsStart + loc.host + loc.pathname.replace('chat.html', 'chat');
