@@ -5,6 +5,11 @@ function scrollToBottom(element) {
     }
 }
 
+let currentContext = {
+    type: 'user', // 'user' or 'room'
+    id: '' // userId or roomId
+};
+
 // Fonction pour ouvrir un onglet
 function openTab(evt, tabName) {
     var i, tabcontent, tablinks;
@@ -21,7 +26,7 @@ function openTab(evt, tabName) {
         evt.currentTarget.className += " active";
         evt.currentTarget.className = evt.currentTarget.className.replace(" notification", ""); // Retire la classe notification uniquement de l'onglet cliqué
     }
-    
+
     // Définir le focus sur le champ de saisie de message
     const messageInput = document.querySelector('#' + tabName + ' .message-input');
     if (messageInput) {
@@ -34,6 +39,15 @@ function openTab(evt, tabName) {
         setTimeout(() => {
             scrollToBottom(chatWindow);
         }, 0);
+    }
+
+    // Mise à jour du contexte actuel
+    if (tabName.startsWith('room-')) {
+        currentContext.type = 'room';
+        currentContext.id = tabName.replace('room-', '');
+    } else {
+        currentContext.type = 'user';
+        currentContext.id = tabName;
     }
 }
 
@@ -102,7 +116,6 @@ $(document).ready(function() {
             socket.send(JSON.stringify({ type: 'joinRoom', roomName: roomId, username: user.username }));
         });
     }
-
 
 	let users = [];
 
@@ -253,10 +266,13 @@ $(document).ready(function() {
 	        openTab(null, formattedUsername);
 	        $('#tab-' + formattedUsername).addClass('active');
 	        currentChat = formattedUsername; // Mettre à jour currentChat
+	        currentContext.type = 'user';
+	        currentContext.id = formattedUsername;
 	    } else {
 	        $('#tab-' + formattedUsername).addClass('notification');
 	    }
 	}
+
 
 	function openRoomChatTab(roomId) {
 	    const formattedRoomId = roomId.replace(/\s/g, '-');
@@ -301,6 +317,7 @@ $(document).ready(function() {
 	function displayMessage(msg) {
 	    const nameColor = msg.gender === 'female' ? 'red' : 'blue';
 	    const fromUser = msg.from ? msg.from.replace(/\s/g, '-') : 'Unknown';
+	    const toUser = msg.to ? msg.to.replace(/\s/g, '-') : 'Unknown';
 	    const roomName = msg.roomName ? msg.roomName.replace(/\s/g, '-') : null;
 	    const fileUrl = msg.fileUrl ? msg.fileUrl : '';
 	    const messageHtml = msg.fileType
@@ -316,13 +333,12 @@ $(document).ready(function() {
 	            $(`#tab-room-${roomName}`).addClass('notification');
 	        }
 	    } else {
-	        const toUser = msg.to ? msg.to.replace(/\s/g, '-') : null;
-	        const chatWindowId = toUser ? '#chat-' + toUser : '#chat-' + fromUser;
+	        const chatWindowId = '#chat-' + (msg.to === user.username ? fromUser : toUser);
 	        const chatWindow = $(chatWindowId);
 	        const tabExists = chatWindow.length > 0;
 
 	        if (!tabExists) {
-	            openUserChatTab(toUser || fromUser, false);
+	            openUserChatTab(msg.to === user.username ? fromUser : toUser, false);
 	        }
 
 	        $(chatWindowId).append(messageHtml);
@@ -330,7 +346,7 @@ $(document).ready(function() {
 	        if ($(chatWindowId).is(':visible')) {
 	            scrollToBottom(chatWindow[0]);
 	        } else {
-	            $('#tab-' + (toUser || fromUser)).addClass('notification');
+	            $('#tab-' + (msg.to === user.username ? fromUser : toUser)).addClass('notification');
 	        }
 	    }
 
@@ -426,38 +442,38 @@ $(document).ready(function() {
 	    }
 	};
 
-    function sendMessageToUser(username) {
-        const formattedUsername = username.replace(/\s/g, '-');
-        const messageInput = $('#message-' + formattedUsername);
-        const message = messageInput.val().trim();
-        if (message === '') return;
+	function sendMessageToUser(username) {
+	    const formattedUsername = username.replace(/\s/g, '-');
+	    const messageInput = $('#message-' + formattedUsername);
+	    const message = messageInput.val().trim();
+	    if (message === '') return;
 
-        const chatWindowId = '#chat-' + formattedUsername;
-        $(chatWindowId).append('<p><span style="color:' + (user.gender === 'female' ? 'red' : 'blue') + ';">' + user.username + '</span>: ' + message + '</p>');
-        messageInput.val('');
+	    const chatWindowId = '#chat-' + formattedUsername;
+	    $(chatWindowId).append('<p><span style="color:' + (user.gender === 'female' ? 'red' : 'blue') + ';">' + user.username + '</span>: ' + message + '</p>');
+	    messageInput.val('');
 
-        // Envoyer le message au serveur via WebSocket
-        socket.send(JSON.stringify({ type: 'message', from: user.username, to: username, content: message, gender: user.gender }));
+	    // Envoyer le message au serveur via WebSocket
+	    socket.send(JSON.stringify({ type: 'message', from: user.username, to: username, content: message, gender: user.gender }));
 
-        // Défilement automatique vers le bas
-        scrollToBottom(document.getElementById('chat-' + formattedUsername));
-    }
+	    // Défilement automatique vers le bas
+	    scrollToBottom(document.getElementById('chat-' + formattedUsername));
+	}
 
-    function sendMessageToRoom(roomId) {
-        const formattedRoomId = roomId.replace(/\s/g, '-');
-        const messageInput = $('#message-room-' + formattedRoomId);
-        const message = messageInput.val().trim();
-        if (message === '') return;
+	function sendMessageToRoom(roomId) {
+	    const formattedRoomId = roomId.replace(/\s/g, '-');
+	    const messageInput = $('#message-room-' + formattedRoomId);
+	    const message = messageInput.val().trim();
+	    if (message === '') return;
 
-        $('#chat-room-' + formattedRoomId).append('<p><span style="color:' + (user.gender === 'female' ? 'red' : 'blue') + ';">' + user.username + '</span>: ' + message + '</p>');
-        messageInput.val('');
+	    $('#chat-room-' + formattedRoomId).append('<p><span style="color:' + (user.gender === 'female' ? 'red' : 'blue') + ';">' + user.username + '</span>: ' + message + '</p>');
+	    messageInput.val('');
 
-        // Envoyer le message au serveur via WebSocket
-        socket.send(JSON.stringify({ type: 'message', roomName: roomId, from: user.username, content: message, gender: user.gender }));
+	    // Envoyer le message au serveur via WebSocket
+	    socket.send(JSON.stringify({ type: 'message', roomName: roomId, from: user.username, content: message, gender: user.gender }));
 
-        // Défilement automatique vers le bas
-        scrollToBottom(document.getElementById('chat-room-' + formattedRoomId));
-    }
+	    // Défilement automatique vers le bas
+	    scrollToBottom(document.getElementById('chat-room-' + formattedRoomId));
+	}
 
     function startWebcam() {
         alert('Démarrer la webcam');
@@ -505,18 +521,33 @@ $(document).ready(function() {
 	            const fileName = response.filePath.split('/').pop(); // Récupère le nom du fichier
 	            const fileUrl = 'download?file=' + encodeURIComponent(fileName); // Encodage du nom de fichier
 
-	            const message = {
-	                type: 'message',
-	                from: user.username,
-	                content: fileName,
-	                fileType: fileType,
-	                fileUrl: fileUrl,
-	                gender: user.gender,
-	                roomName: currentChat.includes('room-') ? currentChat.replace('chat-room-', '').replace(/-/g, ' ') : null,
-	                to: currentChat.includes('room-') ? null : currentChat.replace(/chat-/, '').replace(/-/g, ' ')
-	            };
+	            let message;
 
-	            // Afficher le message dans le chat localement
+	            if (currentContext.type === 'room') {
+	                message = {
+	                    type: 'message',
+	                    from: user.username,
+	                    content: fileName,
+	                    fileType: fileType,
+	                    fileUrl: fileUrl,
+	                    gender: user.gender,
+	                    roomName: currentContext.id.replace(/-/g, ' '),
+	                    to: null
+	                };
+	            } else {
+	                message = {
+	                    type: 'message',
+	                    from: user.username,
+	                    content: fileName,
+	                    fileType: fileType,
+	                    fileUrl: fileUrl,
+	                    gender: user.gender,
+	                    roomName: null,
+	                    to: currentContext.id.replace('chat-', '').replace(/-/g, ' ')
+	                };
+	            }
+
+	            // Afficher le fichier dans le chat de l'expéditeur
 	            displayMessage(message);
 
 	            // Envoyer un message WebSocket pour informer les autres utilisateurs
