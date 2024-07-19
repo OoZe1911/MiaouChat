@@ -9,7 +9,6 @@ import jakarta.websocket.OnOpen;
 import jakarta.websocket.Session;
 import jakarta.websocket.server.ServerEndpoint;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +38,7 @@ public class WebSocketServer {
                     }
                 }
                 broadcastRoomList();
+                broadcastUserDisconnect(user); // Diffuse le message de déconnexion
             }
             broadcastUserList();
         }
@@ -81,6 +81,18 @@ public class WebSocketServer {
                 // Ignorer les messages de type 'ping'
                 break;
         }
+    }
+    
+    private void broadcastUserDisconnect(User user) {
+        Gson gson = new Gson();
+        String messageJson = gson.toJson(Message.createUserDisconnectMessage(user.getUsername()));
+        sessions.values().forEach(session -> {
+            try {
+                session.getBasicRemote().sendText(messageJson);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
     
     private void sendErrorMessage(Session session, String errorMessage) {
@@ -300,6 +312,13 @@ public class WebSocketServer {
                 default:
                     return "unknown";
             }
+        }
+
+        public static Message createUserDisconnectMessage(String username) {
+            Message message = new Message();
+            message.type = "userDisconnect";
+            message.username = username;
+            return message;
         }
 
         // Getters

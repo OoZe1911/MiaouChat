@@ -95,12 +95,29 @@ $(document).ready(function() {
             case 'message':
                 displayMessage(msg);
                 break;
+			case 'userDisconnect':
+			    handleUserDisconnect(msg.username);
+			    break;
             case 'ping':
                 // Ignorer les messages de type 'ping'
                 break;
         }
     };
 
+	// Méthode pour gérer la déconnexion d'un utilisateur
+	function handleUserDisconnect(username) {
+	    // Retirer l'utilisateur de la liste des utilisateurs connectés
+	    users = users.filter(user => user.username !== username);
+	    updateUserList(users);
+
+	    // Retirer l'utilisateur de la liste des utilisateurs dans chaque salon
+	    $('.room-user-link').each(function() {
+	        if ($(this).data('username') === username) {
+	            $(this).closest('tr').remove();
+	        }
+	    });
+	}
+	
     function updateRoomList(rooms) {
         $('#roomList').empty();
         rooms.sort((a, b) => a.name.localeCompare(b.name));
