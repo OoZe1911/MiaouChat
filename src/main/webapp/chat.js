@@ -13,7 +13,7 @@ let currentContext = {
 // Fonction pour valider le nom du salon
 function validateRoomName() {
     const input = document.getElementById('newRoomName');
-    const regex = /[^a-zA-Z0-9 ]/g;
+    const regex = /[^a-zA-Z0-9 éèçà]/g;
     input.value = input.value.replace(regex, '');
 }
 
@@ -191,7 +191,7 @@ $(document).ready(function() {
 	    });
 
 	    // Mise à jour du texte avec le nombre d'hommes et de femmes connectés
-	    $('#userCount').html(`Utilisateurs Connectés (<span style="color: blue;">hommes : </span>${maleCount} / <span style="color: red;">femmes : </span>${femaleCount}) :`);
+	    $('#userCount').html(`Utilisateurs Connectés (<span style="color: lightblue;">hommes : </span>${maleCount} / <span style="color: lightpink;">femmes : </span>${femaleCount}) :`);
 
 	    // Ajouter l'événement de clic aux liens des utilisateurs
 	    $('.user-link').click(function(event) {
@@ -264,7 +264,7 @@ $(document).ready(function() {
 	        const city = userElement.find('td:eq(2)').text();
 	        const gender = userElement.hasClass('user-female') ? 'female' : 'male';
 
-	        const titleColor = gender === 'female' ? 'red' : 'blue';
+	        const titleColor = gender === 'female' ? 'lightpink' : 'lightblue';
 	        const pageTitle = `<span style="color: ${titleColor};">${username}</span> ${age} ans <img src="town.png" alt="town icon" style="width:16px;height:16px;"> ${city}`;
 
 	        // Créer un nouvel onglet avec juste le nom de l'utilisateur
@@ -274,10 +274,10 @@ $(document).ready(function() {
 	        $('body').append(
 	            '<div id="' + formattedUsername + '" class="tabcontent">' +
 	            '<div class="icon-buttons">' +
-	            '<svg onclick="startWebcam()" style="cursor: pointer;color: #CCCCCC;"><use href="#icon-cam" fill="#cccccc"></use></svg>' +
-	            '<svg onclick="startMicrophone()" style="cursor: pointer;"><use href="#icon-mic" fill="#cccccc"></use></svg>' +
-	            '<svg onclick="sendFile()" style="cursor: pointer;"><use href="#icon-file"></use></svg>' +
-	            '<svg onclick="closeTab(event, \'' + formattedUsername + '\')" style="cursor: pointer;"><use href="#icon-close"></use></svg>' +
+	            '<svg onclick="startWebcam()" style="cursor: pointer;color: #CCCCCC;"><use href="#icon-cam"></use></svg>' +
+	            '<svg onclick="startMicrophone()" style="cursor: pointer;"><use href="#icon-mic"></use></svg>' +
+	            '<svg onclick="sendFile()" style="cursor: pointer;"><use href="#icon-file" fill="#cccccc"></use></svg>' +
+	            '<svg onclick="closeTab(event, \'' + formattedUsername + '\')" style="cursor: pointer;"><use href="#icon-close" fill="#cccccc"></use></svg>' +
 	            '</div>' +
 	            '<h3>Discussion avec ' + pageTitle + '</h3>' +
 	            '<div class="chat-window" id="chat-' + formattedUsername + '"></div>' +
@@ -317,10 +317,10 @@ $(document).ready(function() {
 	        $('body').append(
 	            '<div id="room-' + formattedRoomId + '" class="tabcontent">' +
 	            '<div class="icon-buttons">' +
-	            '<svg onclick="startWebcam()" style="cursor: pointer;"><use href="#icon-cam" fill="#cccccc"></use></svg>' +
-	            '<svg onclick="startMicrophone()" style="cursor: pointer;"><use href="#icon-mic" fill="#cccccc"></use></svg>' +
-	            '<svg onclick="sendFile()" style="cursor: pointer;"><use href="#icon-file"></use></svg>' +
-	            '<svg onclick="closeTab(event, \'room-' + formattedRoomId + '\')" style="cursor: pointer;"><use href="#icon-close"></use></svg>' +
+	            '<svg onclick="startWebcam()" style="cursor: pointer;"><use href="#icon-cam"></use></svg>' +
+	            '<svg onclick="startMicrophone()" style="cursor: pointer;"><use href="#icon-mic"></use></svg>' +
+	            '<svg onclick="sendFile()" style="cursor: pointer;"><use href="#icon-file" fill="#cccccc"></use></svg>' +
+	            '<svg onclick="closeTab(event, \'room-' + formattedRoomId + '\')" style="cursor: pointer;"><use href="#icon-close" fill="#cccccc"></use></svg>' +
 	            '</div>' +
 	            '<div class="chat-room-container">' +
 	            '<div class="chat-window" id="chat-room-' + formattedRoomId + '"></div>' +
@@ -347,7 +347,7 @@ $(document).ready(function() {
 	}
 
 	function displayMessage(msg) {
-	    const nameColor = msg.gender === 'female' ? 'red' : 'blue';
+	    const nameColor = msg.gender === 'female' ? 'lightpink' : 'lightblue';
 	    const fromUser = msg.from ? msg.from.replace(/\s/g, '-') : 'Unknown';
 	    const toUser = msg.to ? msg.to.replace(/\s/g, '-') : 'Unknown';
 	    const roomName = msg.roomName ? msg.roomName.replace(/\s/g, '-') : null;
@@ -486,7 +486,7 @@ $(document).ready(function() {
 
 	    const messageContent = linkify(message);
 	    const chatWindowId = '#chat-' + formattedUsername;
-	    $(chatWindowId).append('<p><span style="color:' + (user.gender === 'female' ? 'red' : 'blue') + ';">' + user.username + '</span>: ' + messageContent + '</p>');
+	    $(chatWindowId).append('<p><span style="color:' + (user.gender === 'female' ? 'lightpink' : 'lightblue') + ';">' + user.username + '</span>: ' + messageContent + '</p>');
 	    messageInput.val('');
 
 	    // Envoyer le message au serveur via WebSocket
@@ -503,7 +503,7 @@ $(document).ready(function() {
 	    if (message === '') return;
 
 	    const messageContent = linkify(message);
-	    $('#chat-room-' + formattedRoomId).append('<p><span style="color:' + (user.gender === 'female' ? 'red' : 'blue') + ';">' + user.username + '</span>: ' + messageContent + '</p>');
+	    $('#chat-room-' + formattedRoomId).append('<p><span style="color:' + (user.gender === 'female' ? 'lightpink' : 'lightblue') + ';">' + user.username + '</span>: ' + messageContent + '</p>');
 	    messageInput.val('');
 
 	    // Envoyer le message au serveur via WebSocket
@@ -557,7 +557,7 @@ $(document).ready(function() {
 	                icon = 'movie.png';
 	            }
 
-	            const userColor = user.gender === 'female' ? 'red' : 'blue';
+	            const userColor = user.gender === 'female' ? 'lightpink' : 'lightblue';
 	            const fileName = response.filePath.split('/').pop(); // Récupère le nom du fichier
 	            const fileUrl = 'download?file=' + encodeURIComponent(fileName); // Encodage du nom de fichier
 

@@ -146,7 +146,7 @@
                 }
 
                 const username = $('#username').val();
-                if (!/^[a-zA-Z0-9éè\s]+$/.test(username)) {
+                if (!/^[a-zA-Z0-9éèçà\s]+$/.test(username)) {
                     showError('Le pseudo ne peut contenir que des lettres, des espaces et des chiffres.');
                     return;
                 }
@@ -195,7 +195,7 @@
 
         function validateUsername() {
             const input = document.getElementById('username');
-            const regex = /[^a-zA-Z0-9éè\s]/g;
+            const regex = /[^a-zA-Z0-9éèçà\s]/g;
             input.value = input.value.replace(regex, '');
         }
 
