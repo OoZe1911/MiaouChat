@@ -17,6 +17,11 @@ function validateRoomName() {
     input.value = input.value.replace(regex, '');
 }
 
+function linkify(text) {
+    const urlPattern = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+    return text.replace(urlPattern, '<a href="$1" target="_blank">$1</a>');
+}
+
 // Fonction pour ouvrir un onglet
 function openTab(evt, tabName) {
     var i, tabcontent, tablinks;
@@ -347,9 +352,13 @@ $(document).ready(function() {
 	    const toUser = msg.to ? msg.to.replace(/\s/g, '-') : 'Unknown';
 	    const roomName = msg.roomName ? msg.roomName.replace(/\s/g, '-') : null;
 	    const fileUrl = msg.fileUrl ? msg.fileUrl : '';
-	    const messageHtml = msg.fileType
-	        ? `<p><span style="color:${nameColor};">${msg.from}</span>: <a href="#" class="media-link" data-filetype="${msg.fileType}" data-fileurl="${fileUrl}"><img src="${msg.fileType === 'audio' ? 'music.png' : msg.fileType === 'image' ? 'image.png' : 'movie.png'}" alt="file icon" style="width: 32px; height: 32px;" /></a></p>`
-	        : `<p><span style="color:${nameColor};">${msg.from}</span>: ${msg.content}</p>`;
+	    
+	    // Transform the message content to make URLs clickable
+	    const messageContent = msg.fileType
+	        ? `<a href="#" class="media-link" data-filetype="${msg.fileType}" data-fileurl="${fileUrl}"><img src="${msg.fileType === 'audio' ? 'music.png' : msg.fileType === 'image' ? 'image.png' : 'movie.png'}" alt="file icon" style="width: 32px; height: 32px;" /></a>`
+	        : linkify(msg.content);
+
+	    const messageHtml = `<p><span style="color:${nameColor};">${msg.from}</span>: ${messageContent}</p>`;
 
 	    if (roomName) {
 	        const chatWindowId = '#chat-room-' + roomName;
@@ -475,8 +484,9 @@ $(document).ready(function() {
 	    const message = messageInput.val().trim();
 	    if (message === '') return;
 
+	    const messageContent = linkify(message);
 	    const chatWindowId = '#chat-' + formattedUsername;
-	    $(chatWindowId).append('<p><span style="color:' + (user.gender === 'female' ? 'red' : 'blue') + ';">' + user.username + '</span>: ' + message + '</p>');
+	    $(chatWindowId).append('<p><span style="color:' + (user.gender === 'female' ? 'red' : 'blue') + ';">' + user.username + '</span>: ' + messageContent + '</p>');
 	    messageInput.val('');
 
 	    // Envoyer le message au serveur via WebSocket
@@ -492,7 +502,8 @@ $(document).ready(function() {
 	    const message = messageInput.val().trim();
 	    if (message === '') return;
 
-	    $('#chat-room-' + formattedRoomId).append('<p><span style="color:' + (user.gender === 'female' ? 'red' : 'blue') + ';">' + user.username + '</span>: ' + message + '</p>');
+	    const messageContent = linkify(message);
+	    $('#chat-room-' + formattedRoomId).append('<p><span style="color:' + (user.gender === 'female' ? 'red' : 'blue') + ';">' + user.username + '</span>: ' + messageContent + '</p>');
 	    messageInput.val('');
 
 	    // Envoyer le message au serveur via WebSocket
