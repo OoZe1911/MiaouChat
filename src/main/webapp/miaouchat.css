@@ -102,23 +102,24 @@ input[readonly] {
 }
 
 .tab button {
-    background-color: #ccc; /* Couleur de fond foncée pour les onglets inactifs */
+    background-color: #0f0f0f; /* Couleur de fond foncée pour les onglets inactifs */
     border: none;
     outline: none;
     cursor: pointer;
     padding: 14px 16px;
     transition: 0.3s;
     font-size: 17px;
-    color: black; /* Texte en blanc pour contraster avec le fond foncé */
+    color: grey; /* Texte en blanc pour contraster avec le fond foncé */
 }
 
 .tab button:hover {
-    background-color: #eee; /* Couleur légèrement plus claire au survol */
+    background-color: #202020; /* Couleur légèrement plus claire au survol */
+    color: white;
 }
 
 .tab button.active {
-    background-color: #eee; /* Couleur de fond claire pour l'onglet actif */
-    color: black; /* Texte noir pour l'onglet actif */
+    background-color: #303030; /* Couleur de fond claire pour l'onglet actif */
+    color: white; /* Texte noir pour l'onglet actif */
 }
 
 .tab button.notification {
@@ -173,6 +174,10 @@ input[readonly] {
     color: black;
 }
 
+.user-link {
+	text-decoration: none; /* Enlever le soulignement */
+}
+
 .chat-window {
     border: 1px solid #ccc;
     padding: 10px;
@@ -213,7 +218,11 @@ input[readonly] {
 
 .room-link {
 	text-decoration: none; /* Enlever le soulignement */
-	color: white;
+	color: #d1ff83;
+}
+
+.room-user-link {
+	text-decoration: none; /* Enlever le soulignement */
 }
 
 .room-user-list {

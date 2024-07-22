@@ -268,7 +268,7 @@ $(document).ready(function() {
 	        const pageTitle = `<span style="color: ${titleColor};">${username}</span> ${age} ans <img src="town.png" alt="town icon" style="width:16px;height:16px;"> ${city}`;
 
 	        // Créer un nouvel onglet avec juste le nom de l'utilisateur
-	        $('.tab').append('<button class="tablinks" onclick="openTab(event, \'' + formattedUsername + '\')" id="tab-' + formattedUsername + '">' + username + ' <svg onclick="closeTab(event, \'' + formattedUsername + '\')" style="width:12px; height:12px; cursor: pointer;"><use href="#icon-close"></use></svg></button>');
+	        $('.tab').append('<button class="tablinks" onclick="openTab(event, \'' + formattedUsername + '\')" id="tab-' + formattedUsername + '">' + username + '&nbsp;&nbsp;<svg onclick="closeTab(event, \'' + formattedUsername + '\')" style="width:16px; height:16px; cursor: pointer;"><use href="#icon-close" fill="white"></use></svg></button>');
 
 	        // Créer un nouveau contenu d'onglet
 	        $('body').append(
@@ -311,7 +311,7 @@ $(document).ready(function() {
 	    // Vérifier si l'onglet existe déjà
 	    if ($('#tab-room-' + formattedRoomId).length === 0) {
 	        // Créer un nouvel onglet
-	        $('.tab').append('<button class="tablinks" onclick="openTab(event, \'room-' + formattedRoomId + '\')" id="tab-room-' + formattedRoomId + '">' + roomId + ' <svg onclick="closeTab(event, \'room-' + formattedRoomId + '\')" style="width:12px; height:12px; cursor: pointer;"><use href="#icon-close"></use></svg></button>');
+	        $('.tab').append('<button class="tablinks" onclick="openTab(event, \'room-' + formattedRoomId + '\')" id="tab-room-' + formattedRoomId + '">' + roomId + '&nbsp;&nbsp;<svg onclick="closeTab(event, \'room-' + formattedRoomId + '\')" style="width:16px; height:16px; cursor: pointer;"><use href="#icon-close" fill="white"></use></svg></button>');
 
 	        // Créer un nouveau contenu d'onglet avec la zone utilisateur à droite
 	        $('body').append(
