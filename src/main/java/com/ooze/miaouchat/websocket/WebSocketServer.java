@@ -27,7 +27,9 @@ public class WebSocketServer {
     public void onOpen(Session session, EndpointConfig config) {
     	// Gather user http session
         HttpSession httpSession = (HttpSession) config.getUserProperties().get(HttpSession.class.getName());
-        session.getUserProperties().put(HttpSession.class.getName(), httpSession);
+        if (httpSession != null) {
+            session.getUserProperties().put(HttpSession.class.getName(), httpSession);
+        }
     }
 
 
