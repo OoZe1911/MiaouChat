@@ -232,3 +232,8 @@ input[readonly] {
     padding-left: 10px;
     margin-top: 40px; /* Ajoutez de l'espace au-dessus de la liste des utilisateurs pour éviter le chevauchement avec les icônes */
 }
+
+.link {
+	text-decoration: none; /* Enlever le soulignement */
+	color: #718fff;
+}

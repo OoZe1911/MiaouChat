@@ -19,7 +19,7 @@ function validateRoomName() {
 
 function linkify(text) {
     const urlPattern = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
-    return text.replace(urlPattern, '<a href="$1" target="_blank">$1</a>');
+    return text.replace(urlPattern, '<a href="$1" class="link" target="_blank">$1</a>');
 }
 
 // Fonction pour ouvrir un onglet
