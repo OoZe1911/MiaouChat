@@ -3,6 +3,9 @@ package com.ooze.miaouchat.websocket;
 import com.google.gson.Gson;
 import com.ooze.miaouchat.bean.Room;
 import com.ooze.miaouchat.bean.User;
+
+import jakarta.servlet.http.HttpSession;
+import jakarta.websocket.EndpointConfig;
 import jakarta.websocket.OnClose;
 import jakarta.websocket.OnMessage;
 import jakarta.websocket.OnOpen;
@@ -21,8 +24,12 @@ public class WebSocketServer {
     private static Map<String, Room> rooms = new ConcurrentHashMap<>();
 
     @OnOpen
-    public void onOpen(Session session) {
+    public void onOpen(Session session, EndpointConfig config) {
+    	// Gather user http session
+        HttpSession httpSession = (HttpSession) config.getUserProperties().get(HttpSession.class.getName());
+        session.getUserProperties().put(HttpSession.class.getName(), httpSession);
     }
+
 
     @OnClose
     public void onClose(Session session) {
@@ -42,7 +49,14 @@ public class WebSocketServer {
             }
             broadcastUserList();
         }
+
+        // Invalider la session HTTP
+        HttpSession httpSession = (HttpSession) session.getUserProperties().get(HttpSession.class.getName());
+        if (httpSession != null) {
+            httpSession.invalidate();
+        }
     }
+
 
     @OnMessage
     public void onMessage(String message, Session session) {

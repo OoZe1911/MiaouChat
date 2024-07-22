@@ -276,8 +276,8 @@ $(document).ready(function() {
 	            '<div class="icon-buttons">' +
 	            '<svg onclick="startWebcam()" style="cursor: pointer;color: #CCCCCC;"><use href="#icon-cam"></use></svg>' +
 	            '<svg onclick="startMicrophone()" style="cursor: pointer;"><use href="#icon-mic"></use></svg>' +
-	            '<svg onclick="sendFile()" style="cursor: pointer;"><use href="#icon-file" fill="#cccccc"></use></svg>' +
-	            '<svg onclick="closeTab(event, \'' + formattedUsername + '\')" style="cursor: pointer;"><use href="#icon-close" fill="#cccccc"></use></svg>' +
+	            '<svg onclick="sendFile()" style="cursor: pointer;"><use href="#icon-file" fill="white"></use></svg>' +
+	            '<svg onclick="closeTab(event, \'' + formattedUsername + '\')" style="cursor: pointer;"><use href="#icon-close" fill="white"></use></svg>' +
 	            '</div>' +
 	            '<h3>Discussion avec ' + pageTitle + '</h3>' +
 	            '<div class="chat-window" id="chat-' + formattedUsername + '"></div>' +
@@ -319,8 +319,8 @@ $(document).ready(function() {
 	            '<div class="icon-buttons">' +
 	            '<svg onclick="startWebcam()" style="cursor: pointer;"><use href="#icon-cam"></use></svg>' +
 	            '<svg onclick="startMicrophone()" style="cursor: pointer;"><use href="#icon-mic"></use></svg>' +
-	            '<svg onclick="sendFile()" style="cursor: pointer;"><use href="#icon-file" fill="#cccccc"></use></svg>' +
-	            '<svg onclick="closeTab(event, \'room-' + formattedRoomId + '\')" style="cursor: pointer;"><use href="#icon-close" fill="#cccccc"></use></svg>' +
+	            '<svg onclick="sendFile()" style="cursor: pointer;"><use href="#icon-file" fill="white"></use></svg>' +
+	            '<svg onclick="closeTab(event, \'room-' + formattedRoomId + '\')" style="cursor: pointer;"><use href="#icon-close" fill="white"></use></svg>' +
 	            '</div>' +
 	            '<div class="chat-room-container">' +
 	            '<div class="chat-window" id="chat-room-' + formattedRoomId + '"></div>' +
