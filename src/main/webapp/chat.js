@@ -68,6 +68,149 @@ function sendFile() {
 }
 
 let socket;
+let users = [];
+
+//---------------------------------------------------------------- WebRTC
+let localStream;
+let peerConnections = {};
+const config = {
+    iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        // Ajoutez d'autres serveurs STUN/TURN si nécessaire
+    ]
+};
+
+function startWebcam() {
+    const user = JSON.parse(sessionStorage.getItem('user'));
+    if (!user) {
+        alert('Utilisateur non défini. Veuillez vous reconnecter.');
+        return;
+    }
+
+    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+        .then(stream => {
+            console.log('Flux vidéo reçu:', stream);
+            localStream = stream;
+            showWebcamPopup(localStream);
+
+            // Envoyer l'information aux autres utilisateurs que la webcam est activée
+            socket.send(JSON.stringify({ 
+                type: 'webcamStarted', 
+                username: user.username, 
+                context: currentContext 
+            }));
+        })
+        .catch(error => {
+            console.error('Erreur lors de l\'accès à la webcam :', error);
+        });
+}
+
+function handleWebcamStarted(username, context) {
+    console.log("handleWebcamStarted:", username, context); // Ajoutez ce log pour déboguer
+
+    if (!context) {
+        console.error('Context is undefined');
+        return;
+    }
+
+    // Cherchez l'utilisateur par nom pour obtenir son genre
+    const user = users.find(user => user.username === username);
+    if (!user) {
+        console.error('User not found');
+        return;
+    }
+
+    // Définir la couleur en fonction du genre
+    const nameColor = user.gender === 'female' ? 'lightpink' : 'lightblue';
+
+    // Message HTML
+    const messageHtml = `
+        <p>
+            <span style="color: ${nameColor};">${username}</span>: 
+            vient de lancer sa webcam
+            <img src="webcam.png" class="webcam-icon" style="width:16px;height:16px;margin-left:10px;cursor:pointer;" onclick="viewUserWebcam('${username}', '${context.id}')" />
+        </p>`;
+
+    // Afficher le message dans le bon contexte
+    if (context.type === 'user') {
+        const chatWindowId = '#chat-' + username.replace(/\s/g, '-'); // Modifiez ici pour l'onglet utilisateur
+        $(chatWindowId).append(messageHtml);
+        scrollToBottom(document.querySelector(chatWindowId));
+    } else if (context.type === 'room') {
+        const chatWindowId = '#chat-room-' + context.id;
+        $(chatWindowId).append(messageHtml);
+        scrollToBottom(document.querySelector(chatWindowId));
+    }
+}
+
+function showWebcamPopup(stream) {
+    const popup = window.open('', '', 'width=660,height=500');
+    popup.document.write('<html><head><title>Webcam</title></head><body><video id="webcamVideo" autoplay playsinline muted></video></body></html>');
+    
+    // Utiliser un intervalle pour vérifier la disponibilité de l'élément vidéo
+    const interval = setInterval(() => {
+        const videoElement = popup.document.getElementById('webcamVideo');
+        if (videoElement) {
+            videoElement.srcObject = stream;
+            videoElement.muted = true; // Assurez-vous que la vidéo est en sourdine pour permettre l'autoplay
+
+            // Attendre que l'élément vidéo soit prêt puis démarrer la lecture
+            videoElement.onloadedmetadata = () => {
+                videoElement.play();
+            };
+
+            clearInterval(interval);
+        }
+    }, 100);
+
+    // Ajouter un gestionnaire d'événements pour arrêter le flux vidéo lorsque la popup est fermée
+    popup.addEventListener('beforeunload', () => {
+        stream.getTracks().forEach(track => track.stop());
+    });
+}
+
+function viewUserWebcam(username, contextId) {
+    // Envoyer une demande pour voir la webcam de l'utilisateur
+    socket.send(JSON.stringify({ type: 'viewWebcam', username: username, contextId: contextId }));
+}
+
+// Gestion de l'offre WebRTC
+function handleOffer(offer, username) {
+    const peerConnection = new RTCPeerConnection(config);
+    peerConnections[username] = peerConnection;
+
+    peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+    peerConnection.addStream(localStream);
+
+    peerConnection.createAnswer()
+        .then(answer => {
+            peerConnection.setLocalDescription(answer);
+            socket.send(JSON.stringify({ type: 'answer', answer: answer, username: user.username }));
+        });
+
+    peerConnection.ontrack = function(event) {
+        showWebcamPopup(event.streams[0]);
+    };
+
+    peerConnection.onicecandidate = function(event) {
+        if (event.candidate) {
+            socket.send(JSON.stringify({ type: 'candidate', candidate: event.candidate, username: user.username }));
+        }
+    };
+}
+
+// Gestion de la réponse WebRTC
+function handleAnswer(answer, username) {
+    const peerConnection = peerConnections[username];
+    peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+}
+
+// Gestion des candidats ICE WebRTC
+function handleCandidate(candidate, username) {
+    const peerConnection = peerConnections[username];
+    peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+}
+
 
 $(document).ready(function() {
     const user = JSON.parse(sessionStorage.getItem('user'));
@@ -116,8 +259,21 @@ $(document).ready(function() {
             case 'ping':
                 // Ignorer les messages de type 'ping'
                 break;
-        }
-    };
+			// WebRTC
+			case 'webcamStarted':
+			    handleWebcamStarted(msg.username, msg.context);
+			    break;
+			case 'offer':
+			    handleOffer(msg.offer, msg.username);
+			    break;
+			case 'answer':
+			    handleAnswer(msg.answer, msg.username);
+			    break;
+			case 'candidate':
+			    handleCandidate(msg.candidate, msg.username);
+			    break;
+        };
+	}
 
 	// Méthode pour gérer la déconnexion d'un utilisateur
 	function handleUserDisconnect(username) {
@@ -148,8 +304,6 @@ $(document).ready(function() {
             socket.send(JSON.stringify({ type: 'joinRoom', roomName: roomId, username: user.username }));
         });
     }
-
-	let users = [];
 
 	function updateUserList(newUsers) {
 	    users = newUsers; // Mettre à jour la variable globale
@@ -236,15 +390,14 @@ $(document).ready(function() {
 	    users.forEach(function(user) {
 	        const rowClass = user.gender === 'male' ? 'user-male' : 'user-female';
 	        userListContainer.append(
-	            '<tr class="' + rowClass + '">' +
+	            '<tr class="' + rowClass + '" data-username="' + user.username + '" data-room="' + formattedRoomName + '">' +
 	            '<td><a href="#" class="room-user-link" data-username="' + user.username + '">' + user.username + '</a></td>' +
 	            '<td>' + user.age + '</td>' +
-	            '<td>' + user.city + '</td>' +
+	            '<td>' + user.city + '<img src="webcam.png" class="webcam-icon" style="width:16px;height:16px;margin-left:10px;cursor:pointer;display:none;" /></td>' +
 	            '</tr>'
 	        );
 	    });
 
-	    // Ajouter l'événement de clic aux liens des utilisateurs dans les salons
 	    $('.room-user-link').click(function(event) {
 	        event.preventDefault();
 	        const username = $(this).data('username');
@@ -274,7 +427,7 @@ $(document).ready(function() {
 	        $('body').append(
 	            '<div id="' + formattedUsername + '" class="tabcontent">' +
 	            '<div class="icon-buttons">' +
-	            '<svg onclick="startWebcam()" style="cursor: pointer;color: #CCCCCC;"><use href="#icon-cam"></use></svg>' +
+	            '<svg onclick="startWebcam()" style="cursor: pointer;color: #CCCCCC;"><use href="#icon-cam" fill="white"></use></svg>' +
 	            '<svg onclick="startMicrophone()" style="cursor: pointer;"><use href="#icon-mic"></use></svg>' +
 	            '<svg onclick="sendFile()" style="cursor: pointer;"><use href="#icon-file" fill="white"></use></svg>' +
 	            '<svg onclick="closeTab(event, \'' + formattedUsername + '\')" style="cursor: pointer;"><use href="#icon-close" fill="white"></use></svg>' +
@@ -317,7 +470,7 @@ $(document).ready(function() {
 	        $('body').append(
 	            '<div id="room-' + formattedRoomId + '" class="tabcontent">' +
 	            '<div class="icon-buttons">' +
-	            '<svg onclick="startWebcam()" style="cursor: pointer;"><use href="#icon-cam"></use></svg>' +
+	            '<svg onclick="startWebcam()" style="cursor: pointer;"><use href="#icon-cam" fill="white"></use></svg>' +
 	            '<svg onclick="startMicrophone()" style="cursor: pointer;"><use href="#icon-mic"></use></svg>' +
 	            '<svg onclick="sendFile()" style="cursor: pointer;"><use href="#icon-file" fill="white"></use></svg>' +
 	            '<svg onclick="closeTab(event, \'room-' + formattedRoomId + '\')" style="cursor: pointer;"><use href="#icon-close" fill="white"></use></svg>' +
@@ -512,10 +665,6 @@ $(document).ready(function() {
 	    // Défilement automatique vers le bas
 	    scrollToBottom(document.getElementById('chat-room-' + formattedRoomId));
 	}
-
-    function startWebcam() {
-        alert('Démarrer la webcam');
-    }
 
     function startMicrophone() {
         alert('Démarrer le micro');

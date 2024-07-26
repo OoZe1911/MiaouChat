@@ -25,13 +25,12 @@ public class WebSocketServer {
 
     @OnOpen
     public void onOpen(Session session, EndpointConfig config) {
-    	// Gather user http session
+        // Gather user http session
         HttpSession httpSession = (HttpSession) config.getUserProperties().get(HttpSession.class.getName());
         if (httpSession != null) {
             session.getUserProperties().put(HttpSession.class.getName(), httpSession);
         }
     }
-
 
     @OnClose
     public void onClose(Session session) {
@@ -58,7 +57,6 @@ public class WebSocketServer {
             httpSession.invalidate();
         }
     }
-
 
     @OnMessage
     public void onMessage(String message, Session session) {
@@ -93,12 +91,101 @@ public class WebSocketServer {
                     sendMessageToUser(msg.getFrom(), msg.getTo(), msg.getContent(), msg.getGender(), msg.getFileName(), msg.getFileUrl(), msg.getFileType());
                 }
                 break;
+            case "webcamStarted":
+                handleWebcamStarted(msg);
+                break;
+            case "viewWebcam":
+                handleViewWebcam(msg, session);
+                break;
             case "ping":
                 // Ignorer les messages de type 'ping'
                 break;
+            case "offer":
+                handleOffer(msg, session);
+                break;
+            case "answer":
+                handleAnswer(msg, session);
+                break;
+            case "candidate":
+                handleCandidate(msg, session);
+                break;
         }
     }
-    
+
+    private void handleWebcamStarted(Message msg) {
+        String username = msg.getUsername();
+        Map<String, String> context = msg.getContext();
+        String contextType = context.get("type");
+        String contextId = context.get("id");
+
+        // Message à envoyer
+        Message notification = new Message();
+        notification.setType("webcamStarted");
+        notification.setUsername(username);
+        notification.setContext(context); // Ajouter le contexte au message
+
+        Gson gson = new Gson();
+        if ("room".equals(contextType)) {
+            Room room = rooms.get(contextId);
+            if (room != null) {
+                for (User user : room.getUsers()) {
+                    Session userSession = sessions.get(user.getUsername());
+                    if (userSession != null && userSession.isOpen()) {
+                        userSession.getAsyncRemote().sendText(gson.toJson(notification));
+                    }
+                }
+            }
+        } else if ("user".equals(contextType)) {
+            Session userSession = sessions.get(contextId);
+            if (userSession != null && userSession.isOpen()) {
+                userSession.getAsyncRemote().sendText(gson.toJson(notification));
+            }
+        }
+    }
+
+    private void handleViewWebcam(Message msg, Session session) {
+        String username = msg.getUsername();
+        String contextId = msg.getContextId();
+
+        Session userSession = sessions.get(contextId);
+        if (userSession != null && userSession.isOpen()) {
+            // Envoyer une demande au client initiateur de créer une offre WebRTC
+            Message requestOfferMsg = new Message();
+            requestOfferMsg.setType("requestOffer");
+            requestOfferMsg.setUsername(username); // L'utilisateur qui veut voir la webcam
+            requestOfferMsg.setContextId(contextId); // Le contexte dans lequel la webcam est demandée
+            Gson gson = new Gson();
+            userSession.getAsyncRemote().sendText(gson.toJson(requestOfferMsg));
+        }
+    }
+
+    private void handleOffer(Message msg, Session session) {
+        String toUsername = msg.getTo();
+        Session toSession = sessions.get(toUsername);
+        if (toSession != null && toSession.isOpen()) {
+            Gson gson = new Gson();
+            toSession.getAsyncRemote().sendText(gson.toJson(msg));
+        }
+    }
+
+    private void handleAnswer(Message msg, Session session) {
+        String toUsername = msg.getTo();
+        Session toSession = sessions.get(toUsername);
+        if (toSession != null && toSession.isOpen()) {
+            Gson gson = new Gson();
+            toSession.getAsyncRemote().sendText(gson.toJson(msg));
+        }
+    }
+
+    private void handleCandidate(Message msg, Session session) {
+        String toUsername = msg.getTo();
+        Session toSession = sessions.get(toUsername);
+        if (toSession != null && toSession.isOpen()) {
+            Gson gson = new Gson();
+            toSession.getAsyncRemote().sendText(gson.toJson(msg));
+        }
+    }
+
     private void broadcastUserDisconnect(User user) {
         Gson gson = new Gson();
         String messageJson = gson.toJson(Message.createUserDisconnectMessage(user.getUsername()));
@@ -110,7 +197,7 @@ public class WebSocketServer {
             }
         });
     }
-    
+
     private void sendErrorMessage(Session session, String errorMessage) {
         try {
             Gson gson = new Gson();
@@ -244,9 +331,12 @@ public class WebSocketServer {
         private List<Room> rooms;
         private String error;
         private boolean isRoomMessage;
-        private String fileType;  // Nouvel attribut
-        private String fileName;  // Nouvel attribut
-        private String fileUrl;   // Nouvel attribut
+        private String fileType;
+        private String fileName;
+        private String fileUrl;
+        private Map<String, String> context;
+        private String contextId;  // Nouvel attribut pour l'ID du contexte
+        private String offer;  // Nouvel attribut pour l'offre WebRTC
 
         public Message() {}
 
@@ -338,70 +428,33 @@ public class WebSocketServer {
         }
 
         // Getters
-        public String getType() {
-            return type;
-        }
+        public String getType() { return type; }
+        public void setType(String type) { this.type = type; }
 
-        public String getUsername() {
-            return username;
-        }
+        public String getUsername() { return username; }
+        public void setUsername(String username) { this.username = username; }
 
-        public int getAge() {
-            return age;
-        }
+        public int getAge() { return age; }
+        public String getGender() { return gender; }
+        public String getCity() { return city; }
+        public String getFrom() { return from; }
+        public String getTo() { return to; }
+        public String getContent() { return content; }
+        public String getRoomName() { return roomName; }
+        public List<User> getUsers() { return users; }
+        public List<Room> getRooms() { return rooms; }
+        public String getError() { return error; }
+        public boolean isRoomMessage() { return isRoomMessage; }
+        public String getFileType() { return fileType; }
+        public String getFileName() { return fileName; }
+        public String getFileUrl() { return fileUrl; }
+        public Map<String, String> getContext() { return context; }
+        public void setContext(Map<String, String> context) { this.context = context; }
 
-        public String getGender() {
-            return gender;
-        }
+        public String getContextId() { return contextId; }
+        public void setContextId(String contextId) { this.contextId = contextId; }
 
-        public String getCity() {
-            return city;
-        }
-
-        public String getFrom() {
-            return from;
-        }
-
-        public String getTo() {
-            return to;
-        }
-
-        public String getContent() {
-            return content;
-        }
-
-        public String getRoomName() {
-            return roomName;
-        }
-
-        public List<User> getUsers() {
-            return users;
-        }
-
-        public List<Room> getRooms() {
-            return rooms;
-        }
-
-        public String getError() {
-            return error;
-        }
-
-        public boolean isRoomMessage() {
-            return isRoomMessage;
-        }
-
-        public String getFileType() {
-            return fileType;
-        }
-
-        public String getFileName() {
-            return fileName;
-        }
-
-        public String getFileUrl() {
-            return fileUrl;
-        }
+        public String getOffer() { return offer; }
+        public void setOffer(String offer) { this.offer = offer; }
     }
-
-
 }
